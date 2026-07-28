@@ -1,8 +1,22 @@
 import Link from "next/link";
+import { DitheringShader } from "@/components/ui/dithering-shader";
 
 export default function Home() {
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+      <div className="relative flex h-[500px] w-full flex-col items-center justify-center overflow-hidden rounded-lg mb-8">
+        <DitheringShader
+          shape="sphere"
+          type="random"
+          colorBack="#000000"
+          colorFront="#f43f5e"
+          pxSize={2}
+          speed={1.5}
+        />
+        <span className="pointer-events-none z-10 text-center text-7xl leading-none absolute text-white font-semibold tracking-tighter whitespace-pre-wrap">
+          Kredit
+        </span>
+      </div>
       <h1 className="text-4xl font-bold mb-4">Kredit Protocol</h1>
       <p className="text-lg text-gray-600 mb-8 max-w-2xl">
         A Confidential Credential & Eligibility Protocol on Midnight.

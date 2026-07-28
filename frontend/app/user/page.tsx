@@ -6,7 +6,7 @@ import { findKreditContract } from '@/lib/providers';
 import { loadPrivateState, generateInitialPrivateState, savePrivateState } from '@/lib/prover';
 
 const CONTRACT_ADDRESS_KEY = 'kredit-contract-address';
-const CONTRACT_ADDRESS = '<YOUR_DEPLOYED_CONTRACT_ADDRESS>';
+const CONTRACT_ADDRESS = '';
 
 export default function UserPage() {
   const { isConnected, connectedApi } = useWallet();
@@ -39,8 +39,8 @@ export default function UserPage() {
 
     try {
       const contractAddr = localStorage.getItem(CONTRACT_ADDRESS_KEY) || CONTRACT_ADDRESS;
-      if (!contractAddr || contractAddr === '<YOUR_DEPLOYED_CONTRACT_ADDRESS>') {
-        throw new Error('No contract deployed. Ask the admin to deploy first, or replace <YOUR_DEPLOYED_CONTRACT_ADDRESS> in the source code.');
+      if (!contractAddr) {
+        throw new Error('No contract deployed. Midnight infra is currently down — contract deployment will be available once the network is back.');
       }
 
       const found = await findKreditContract(connectedApi, contractAddr);

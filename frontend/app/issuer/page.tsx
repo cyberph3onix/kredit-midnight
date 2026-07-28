@@ -5,7 +5,7 @@ import { useWallet } from '@/lib/wallet';
 import { deployKreditContract, findKreditContract } from '@/lib/providers';
 
 const CONTRACT_ADDRESS_KEY = 'kredit-contract-address';
-const CONTRACT_ADDRESS = '<YOUR_DEPLOYED_CONTRACT_ADDRESS>';
+const CONTRACT_ADDRESS = '';
 
 function getContractAddress(): string | null {
   if (typeof window === 'undefined') return null;
@@ -50,7 +50,7 @@ export default function IssuerPage() {
     setStatus('Registering issuer...');
     try {
       const addr = contractAddr ?? getContractAddress();
-      if (!addr || addr === '<YOUR_DEPLOYED_CONTRACT_ADDRESS>') throw new Error('Deploy contract first or replace <YOUR_DEPLOYED_CONTRACT_ADDRESS> in source code.');
+      if (!addr) throw new Error('Deploy contract first. No contract address available yet (Midnight infra is down).');
       const found = await findKreditContract(connectedApi, addr);
       const issuerIdBytes = new TextEncoder().encode(issuerId.trim());
       await (found.callTx as any).registerIssuer(issuerIdBytes);
@@ -69,7 +69,7 @@ export default function IssuerPage() {
     setStatus('Issuing credential...');
     try {
       const addr = contractAddr ?? getContractAddress();
-      if (!addr || addr === '<YOUR_DEPLOYED_CONTRACT_ADDRESS>') throw new Error('Deploy contract first or replace <YOUR_DEPLOYED_CONTRACT_ADDRESS> in source code.');
+      if (!addr) throw new Error('Deploy contract first. No contract address available yet (Midnight infra is down).');
       const found = await findKreditContract(connectedApi, addr);
       const subjectBytes = new TextEncoder().encode(subjectAddress.trim());
       await (found.callTx as any).issueCredential(subjectBytes);
@@ -88,7 +88,7 @@ export default function IssuerPage() {
     setStatus('Revoking credential...');
     try {
       const addr = contractAddr ?? getContractAddress();
-      if (!addr || addr === '<YOUR_DEPLOYED_CONTRACT_ADDRESS>') throw new Error('Deploy contract first or replace <YOUR_DEPLOYED_CONTRACT_ADDRESS> in source code.');
+      if (!addr) throw new Error('Deploy contract first. No contract address available yet (Midnight infra is down).');
       const found = await findKreditContract(connectedApi, addr);
       const subjectBytes = new TextEncoder().encode(subjectAddress.trim());
       await (found.callTx as any).revokeCredential(subjectBytes);
