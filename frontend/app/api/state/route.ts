@@ -3,7 +3,7 @@ import { setNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
 import { FetchZkConfigProvider } from '@midnight-ntwrk/midnight-js-fetch-zk-config-provider';
 import { indexerPublicDataProvider } from '@midnight-ntwrk/midnight-js-indexer-public-data-provider';
 
-const ZK_ARTIFACTS_BASE_URL = process.env.ZK_ARTIFACTS_URL ?? 'http://localhost:3100';
+const ZK_ARTIFACTS_BASE_URL = process.env.ZK_ARTIFACTS_URL ?? '';
 
 export async function GET(req: NextRequest) {
   try {

@@ -4,11 +4,9 @@ import { FetchZkConfigProvider } from '@midnight-ntwrk/midnight-js-fetch-zk-conf
 import { httpClientProofProvider } from '@midnight-ntwrk/midnight-js-http-client-proof-provider';
 import { indexerPublicDataProvider } from '@midnight-ntwrk/midnight-js-indexer-public-data-provider';
 import { deployContract } from '@midnight-ntwrk/midnight-js-contracts';
-import { Contract as KreditContract } from '../../../../contract/src';
-import { witnesses } from '../../../../contract/src/witnesses';
-import type { KreditPrivateState } from '../../../../contract/src/witnesses';
+import { Contract as KreditContract, witnesses, type KreditPrivateState } from 'kredit-contract';
 
-const ZK_ARTIFACTS_BASE_URL = process.env.ZK_ARTIFACTS_URL ?? 'http://localhost:3100';
+const ZK_ARTIFACTS_BASE_URL = process.env.ZK_ARTIFACTS_URL ?? '';
 const PROOF_SERVER_URL = process.env.PROOF_SERVER_URL ?? 'http://localhost:6300';
 
 export async function POST(req: NextRequest) {
