@@ -1,0 +1,20 @@
+{
+  "name": "kredit-midnight",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "contract",
+    "api",
+    "frontend"
+  ],
+  "scripts": {
+    "compact": "cd contract && npm run compact",
+    "build": "cd contract && npm run build && cd ../api && npm run build",
+    "test": "cd contract && npx vitest run",
+    "deploy": "echo 'Run manually: NODE_OPTIONS=\"--max-old-space-size=12288\" npm run deploy -- --network preprod'"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
