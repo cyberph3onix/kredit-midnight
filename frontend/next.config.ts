@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { resolve } from "path";
 
 const nextConfig: NextConfig = {
   serverExternalPackages: [
@@ -17,7 +18,11 @@ const nextConfig: NextConfig = {
     '@midnight-ntwrk/dapp-connector-api',
     '@midnight-ntwrk/ledger-v8',
   ],
-  turbopack: {},
+  turbopack: {
+    resolveAlias: {
+      'isomorphic-ws': './isomorphic-ws-shim.js',
+    },
+  },
 };
 
 export default nextConfig;
