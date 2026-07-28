@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import {
-  constructorContext,
-  QueryContext,
+  createConstructorContext,
+  createCircuitContext,
   dummyContractAddress,
   sampleSigningKey,
   signatureVerifyingKey,
 } from '@midnight-ntwrk/compact-runtime';
-import { Contract, ledger } from '../managed/kredit/contract/index.cjs';
+import { Contract, ledger } from '../managed/kredit/contract/index.js';
 
 function makeBytes32(seed: number): Uint8Array {
   const arr = new Uint8Array(32);
@@ -17,7 +17,7 @@ function makeBytes32(seed: number): Uint8Array {
 function getCoinPublicKey(): string {
   const sk = sampleSigningKey();
   const svk = signatureVerifyingKey(sk);
-  return svk.substring(4);
+  return svk;
 }
 
 function createSimulator(opts: {
@@ -30,31 +30,28 @@ function createSimulator(opts: {
   const adminSecret = opts.adminSecret ?? makeBytes32(0xAA);
   const issuerSecret = opts.issuerSecret ?? makeBytes32(0xBB);
   const holderSecret = opts.holderSecret ?? makeBytes32(0xCC);
-  const score = opts.score ?? 750n;
+  const score = opts.score ?? BigInt(750);
   const salt = opts.salt ?? makeBytes32(0xDD);
 
   const contract = new Contract({
-    adminSecret: (ctx) => [ctx, adminSecret],
-    issuerSecret: (ctx) => [ctx, issuerSecret],
-    credentialScore: (ctx) => [ctx, score],
-    credentialSalt: (ctx) => [ctx, salt],
-    holderSecret: (ctx) => [ctx, holderSecret],
+    adminSecret: (ctx: any) => [ctx, adminSecret],
+    issuerSecret: (ctx: any) => [ctx, issuerSecret],
+    credentialScore: (ctx: any) => [ctx, score],
+    credentialSalt: (ctx: any) => [ctx, salt],
+    holderSecret: (ctx: any) => [ctx, holderSecret],
   });
 
   const adminId = makeBytes32(0x01);
   const coinPub = getCoinPublicKey();
-  const ctx = constructorContext({}, coinPub);
+  const ctx = createConstructorContext({}, coinPub);
   const initResult = contract.initialState(ctx, adminId);
 
-  const circuitCtx = {
-    originalState: initResult.currentContractState,
-    currentPrivateState: initResult.currentPrivateState,
-    currentZswapLocalState: initResult.currentZswapLocalState,
-    transactionContext: new QueryContext(
-      initResult.currentContractState.data,
-      dummyContractAddress(),
-    ),
-  };
+  const circuitCtx = createCircuitContext(
+    dummyContractAddress(),
+    coinPub,
+    initResult.currentContractState,
+    initResult.currentPrivateState,
+  );
 
   return { contract, circuitCtx };
 }
@@ -62,7 +59,7 @@ function createSimulator(opts: {
 describe('Kredit contract', () => {
   it('initializes admin correctly', () => {
     const { circuitCtx } = createSimulator();
-    const state = ledger(circuitCtx.transactionContext.state);
+    const state = ledger(circuitCtx.currentQueryContext.state);
     expect(state.contractAdmin).toBeDefined();
     expect(state.contractAdmin.length).toBe(32);
   });
@@ -74,8 +71,8 @@ describe('Kredit contract', () => {
     const result = contract.impureCircuits.registerIssuer(circuitCtx, issuerId);
     circuitCtx = result.context;
 
-    const state = ledger(circuitCtx.transactionContext.state);
-    expect(state.issuerRegistry.size()).toBe(1n);
+    const state = ledger(circuitCtx.currentQueryContext.state);
+    expect(state.issuerRegistry.size()).toBe(BigInt(1));
   });
 
   it('issueCredential stores a commitment', () => {
@@ -87,37 +84,37 @@ describe('Kredit contract', () => {
     const subject = makeBytes32(0x10);
     ({ context: circuitCtx } = contract.impureCircuits.issueCredential(circuitCtx, subject));
 
-    const state = ledger(circuitCtx.transactionContext.state);
-    expect(state.credentials.size()).toBe(1n);
+    const state = ledger(circuitCtx.currentQueryContext.state);
+    expect(state.credentials.size()).toBe(BigInt(1));
   });
 
   it('proveEligibility returns true for eligible score', () => {
     const holderAddr = makeBytes32(0x10);
-    let { contract, circuitCtx } = createSimulator({ score: 750n, holderSecret: holderAddr });
+    let { contract, circuitCtx } = createSimulator({ score: BigInt(750), holderSecret: holderAddr });
 
     const issuerId = makeBytes32(0x01);
     ({ context: circuitCtx } = contract.impureCircuits.registerIssuer(circuitCtx, issuerId));
     ({ context: circuitCtx } = contract.impureCircuits.issueCredential(circuitCtx, holderAddr));
 
-    const result = contract.impureCircuits.proveEligibility(circuitCtx, 700n);
+    const result = contract.impureCircuits.proveEligibility(circuitCtx, BigInt(700));
     expect(result.result).toBe(true);
   });
 
   it('proveEligibility returns false for ineligible score', () => {
     const holderAddr = makeBytes32(0x10);
-    let { contract, circuitCtx } = createSimulator({ score: 500n, holderSecret: holderAddr });
+    let { contract, circuitCtx } = createSimulator({ score: BigInt(500), holderSecret: holderAddr });
 
     const issuerId = makeBytes32(0x01);
     ({ context: circuitCtx } = contract.impureCircuits.registerIssuer(circuitCtx, issuerId));
     ({ context: circuitCtx } = contract.impureCircuits.issueCredential(circuitCtx, holderAddr));
 
-    const result = contract.impureCircuits.proveEligibility(circuitCtx, 700n);
+    const result = contract.impureCircuits.proveEligibility(circuitCtx, BigInt(700));
     expect(result.result).toBe(false);
   });
 
   it('revoked credential fails eligibility', () => {
     const holderAddr = makeBytes32(0x10);
-    let { contract, circuitCtx } = createSimulator({ score: 750n, holderSecret: holderAddr });
+    let { contract, circuitCtx } = createSimulator({ score: BigInt(750), holderSecret: holderAddr });
 
     const issuerId = makeBytes32(0x01);
     ({ context: circuitCtx } = contract.impureCircuits.registerIssuer(circuitCtx, issuerId));
@@ -125,7 +122,7 @@ describe('Kredit contract', () => {
     ({ context: circuitCtx } = contract.impureCircuits.revokeCredential(circuitCtx, holderAddr));
 
     expect(() => {
-      contract.impureCircuits.proveEligibility(circuitCtx, 300n);
+      contract.impureCircuits.proveEligibility(circuitCtx, BigInt(300));
     }).toThrow();
   });
 
@@ -142,37 +139,32 @@ describe('Kredit contract', () => {
     const adminA = makeBytes32(0xAA);
     const adminB = makeBytes32(0xFF);
 
-    // Deploy contract with admin A
     const contractA = new Contract({
-      adminSecret: (ctx) => [ctx, adminA],
-      issuerSecret: (ctx) => [ctx, makeBytes32(0xBB)],
-      credentialScore: (ctx) => [ctx, 750n],
-      credentialSalt: (ctx) => [ctx, makeBytes32(0xDD)],
-      holderSecret: (ctx) => [ctx, makeBytes32(0xCC)],
+      adminSecret: (ctx: any) => [ctx, adminA],
+      issuerSecret: (ctx: any) => [ctx, makeBytes32(0xBB)],
+      credentialScore: (ctx: any) => [ctx, BigInt(750)],
+      credentialSalt: (ctx: any) => [ctx, makeBytes32(0xDD)],
+      holderSecret: (ctx: any) => [ctx, makeBytes32(0xCC)],
     });
 
     const adminId = makeBytes32(0x01);
     const coinPub = getCoinPublicKey();
-    const ctx = constructorContext({}, coinPub);
-    const initResult = contractA.initialState(ctx, adminId);
+    const ctorCtx = createConstructorContext({}, coinPub);
+    const initResult = contractA.initialState(ctorCtx, adminId);
 
-    let circuitCtx = {
-      originalState: initResult.currentContractState,
-      currentPrivateState: initResult.currentPrivateState,
-      currentZswapLocalState: initResult.currentZswapLocalState,
-      transactionContext: new QueryContext(
-        initResult.currentContractState.data,
-        dummyContractAddress(),
-      ),
-    };
+    let circuitCtx = createCircuitContext(
+      dummyContractAddress(),
+      coinPub,
+      initResult.currentContractState,
+      initResult.currentPrivateState,
+    );
 
-    // Create new contract with admin B's witness but reuse state from admin A
     const contractB = new Contract({
-      adminSecret: (ctx) => [ctx, adminB],
-      issuerSecret: (ctx) => [ctx, makeBytes32(0xBB)],
-      credentialScore: (ctx) => [ctx, 750n],
-      credentialSalt: (ctx) => [ctx, makeBytes32(0xDD)],
-      holderSecret: (ctx) => [ctx, makeBytes32(0xCC)],
+      adminSecret: (ctx: any) => [ctx, adminB],
+      issuerSecret: (ctx: any) => [ctx, makeBytes32(0xBB)],
+      credentialScore: (ctx: any) => [ctx, BigInt(750)],
+      credentialSalt: (ctx: any) => [ctx, makeBytes32(0xDD)],
+      holderSecret: (ctx: any) => [ctx, makeBytes32(0xCC)],
     });
 
     const issuerId = makeBytes32(0x01);

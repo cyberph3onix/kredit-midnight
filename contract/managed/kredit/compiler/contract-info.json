@@ -1,8 +1,12 @@
 {
+  "compiler-version": "0.31.1",
+  "language-version": "0.23.0",
+  "runtime-version": "0.16.0",
   "circuits": [
     {
       "name": "deriveAdminPk",
       "pure": true,
+      "proof": false,
       "arguments": [
         {
           "name": "sk",
@@ -20,6 +24,7 @@
     {
       "name": "rotateAdmin",
       "pure": false,
+      "proof": true,
       "arguments": [
         {
           "name": "newAdmin",
@@ -38,6 +43,7 @@
     {
       "name": "registerIssuer",
       "pure": false,
+      "proof": true,
       "arguments": [
         {
           "name": "issuerId",
@@ -56,6 +62,7 @@
     {
       "name": "unregisterIssuer",
       "pure": false,
+      "proof": true,
       "arguments": [
         {
           "name": "issuerId",
@@ -74,6 +81,7 @@
     {
       "name": "issueCredential",
       "pure": false,
+      "proof": true,
       "arguments": [
         {
           "name": "subject",
@@ -92,6 +100,7 @@
     {
       "name": "revokeCredential",
       "pure": false,
+      "proof": true,
       "arguments": [
         {
           "name": "subject",
@@ -110,6 +119,7 @@
     {
       "name": "proveEligibility",
       "pure": false,
+      "proof": true,
       "arguments": [
         {
           "name": "threshold",
@@ -126,6 +136,7 @@
     {
       "name": "proveNotRevoked",
       "pure": false,
+      "proof": true,
       "arguments": [
       ],
       "result-type": {
@@ -181,5 +192,54 @@
     }
   ],
   "contracts": [
+  ],
+  "ledger": [
+    {
+      "name": "contractAdmin",
+      "index": 0,
+      "exported": true,
+      "storage": "Cell",
+      "type": {
+        "type-name": "Bytes",
+        "length": 32
+      }
+    },
+    {
+      "name": "credentials",
+      "index": 1,
+      "exported": true,
+      "storage": "Map",
+      "key": {
+        "type-name": "Bytes",
+        "length": 32
+      },
+      "value": {
+        "type-name": "Bytes",
+        "length": 32
+      }
+    },
+    {
+      "name": "issuerRegistry",
+      "index": 2,
+      "exported": true,
+      "storage": "Map",
+      "key": {
+        "type-name": "Bytes",
+        "length": 32
+      },
+      "value": {
+        "type-name": "Boolean"
+      }
+    },
+    {
+      "name": "revoked",
+      "index": 3,
+      "exported": true,
+      "storage": "Set",
+      "type": {
+        "type-name": "Bytes",
+        "length": 32
+      }
+    }
   ]
 }

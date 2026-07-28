@@ -1,4 +1,4 @@
-import type { Witnesses } from '../managed/kredit/contract/index.cjs';
+import type { Witnesses } from '../managed/kredit/contract/index.js';
 
 export interface KreditPrivateState {
   adminSecretKey: Uint8Array;

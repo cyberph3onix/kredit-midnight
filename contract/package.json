@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "main": "managed/kredit/contract/index.cjs",
+  "main": "managed/kredit/contract/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
@@ -18,7 +18,7 @@
     "test": "vitest run"
   },
   "devDependencies": {
-    "@midnight-ntwrk/compact-runtime": "^0.8.1",
+    "@midnight-ntwrk/compact-runtime": "^0.16.0",
     "vitest": "^3.2.7"
   },
   "dependencies": {
