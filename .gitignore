@@ -32,3 +32,4 @@ coverage/
 
 # Compact generated (keep managed/ committed)
 # managed/ is intentionally NOT gitignored per PRD requirement
+.vercel
