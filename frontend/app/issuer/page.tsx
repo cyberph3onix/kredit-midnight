@@ -3,10 +3,8 @@
 import { useState, useCallback } from 'react';
 import { useWallet } from '@/lib/wallet';
 import { deployKreditContract, findKreditContract } from '@/lib/providers';
-import { loadPrivateState, savePrivateState, generateInitialPrivateState } from '@/lib/prover';
 
 const CONTRACT_ADDRESS_KEY = 'kredit-contract-address';
-const PRIVATE_STATE_KEY = 'kredit-private-state';
 const CONTRACT_ADDRESS = '<YOUR_DEPLOYED_CONTRACT_ADDRESS>';
 
 function getContractAddress(): string | null {
@@ -18,24 +16,8 @@ function setContractAddress(addr: string) {
   localStorage.setItem(CONTRACT_ADDRESS_KEY, addr);
 }
 
-function getStoredPrivateState() {
-  if (typeof window === 'undefined') return null;
-  try {
-    const raw = localStorage.getItem(PRIVATE_STATE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    return {
-      adminSecretKey: Uint8Array.from(parsed.adminSecretKey),
-      issuerSecretKey: Uint8Array.from(parsed.issuerSecretKey),
-      holderSecretKey: Uint8Array.from(parsed.holderSecretKey),
-      score: BigInt(parsed.score),
-      salt: Uint8Array.from(parsed.salt),
-    };
-  } catch { return null; }
-}
-
 export default function IssuerPage() {
-  const { isConnected, connectedApi, config } = useWallet();
+  const { isConnected, connectedApi } = useWallet();
   const [subjectAddress, setSubjectAddress] = useState('');
   const [issuerId, setIssuerId] = useState('');
   const [contractAddr, setContractAddr] = useState<string | null>(null);
@@ -48,12 +30,9 @@ export default function IssuerPage() {
     setStatus('Deploying contract... (this may take a minute for proof generation)');
     try {
       const adminId = new TextEncoder().encode('kredit-admin-001');
-      const ps = getStoredPrivateState() ?? generateInitialPrivateState();
-      savePrivateState(ps);
+      const deployed = await deployKreditContract(connectedApi, adminId, null);
 
-      const deployed = await deployKreditContract(connectedApi, adminId, ps);
-
-      const addr = (deployed as any).contractAddress ?? 'unknown';
+      const addr = deployed.contractAddress ?? 'unknown';
       setContractAddr(addr);
       setContractAddress(addr);
       setStatus(`Contract deployed at ${addr}`);
@@ -70,11 +49,11 @@ export default function IssuerPage() {
     setLoading(true);
     setStatus('Registering issuer...');
     try {
-      const addr = contractAddr ?? getContractAddress() ?? CONTRACT_ADDRESS;
+      const addr = contractAddr ?? getContractAddress();
       if (!addr || addr === '<YOUR_DEPLOYED_CONTRACT_ADDRESS>') throw new Error('Deploy contract first or replace <YOUR_DEPLOYED_CONTRACT_ADDRESS> in source code.');
       const found = await findKreditContract(connectedApi, addr);
       const issuerIdBytes = new TextEncoder().encode(issuerId.trim());
-      await (found.callTx as any).registerIssuer(issuerIdBytes);
+      await found.callTx.registerIssuer(issuerIdBytes);
       setStatus(`Issuer "${issuerId}" registered on-chain`);
     } catch (err) {
       console.error('Register issuer error:', err);
@@ -89,11 +68,11 @@ export default function IssuerPage() {
     setLoading(true);
     setStatus('Issuing credential...');
     try {
-      const addr = contractAddr ?? getContractAddress() ?? CONTRACT_ADDRESS;
+      const addr = contractAddr ?? getContractAddress();
       if (!addr || addr === '<YOUR_DEPLOYED_CONTRACT_ADDRESS>') throw new Error('Deploy contract first or replace <YOUR_DEPLOYED_CONTRACT_ADDRESS> in source code.');
       const found = await findKreditContract(connectedApi, addr);
       const subjectBytes = new TextEncoder().encode(subjectAddress.trim());
-      await (found.callTx as any).issueCredential(subjectBytes);
+      await found.callTx.issueCredential(subjectBytes);
       setStatus(`Credential issued for ${subjectAddress.slice(0, 16)}... (commitment stored on-chain)`);
     } catch (err) {
       console.error('Issue credential error:', err);
@@ -108,11 +87,11 @@ export default function IssuerPage() {
     setLoading(true);
     setStatus('Revoking credential...');
     try {
-      const addr = contractAddr ?? getContractAddress() ?? CONTRACT_ADDRESS;
+      const addr = contractAddr ?? getContractAddress();
       if (!addr || addr === '<YOUR_DEPLOYED_CONTRACT_ADDRESS>') throw new Error('Deploy contract first or replace <YOUR_DEPLOYED_CONTRACT_ADDRESS> in source code.');
       const found = await findKreditContract(connectedApi, addr);
       const subjectBytes = new TextEncoder().encode(subjectAddress.trim());
-      await (found.callTx as any).revokeCredential(subjectBytes);
+      await found.callTx.revokeCredential(subjectBytes);
       setStatus(`Credential revoked for ${subjectAddress.slice(0, 16)}...`);
     } catch (err) {
       console.error('Revoke credential error:', err);
