@@ -17,6 +17,7 @@ const nextConfig: NextConfig = {
     '@midnight-ntwrk/dapp-connector-api',
     '@midnight-ntwrk/ledger-v8',
   ],
+  turbopack: {},
 };
 
 export default nextConfig;

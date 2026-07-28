@@ -53,7 +53,7 @@ export default function IssuerPage() {
       if (!addr || addr === '<YOUR_DEPLOYED_CONTRACT_ADDRESS>') throw new Error('Deploy contract first or replace <YOUR_DEPLOYED_CONTRACT_ADDRESS> in source code.');
       const found = await findKreditContract(connectedApi, addr);
       const issuerIdBytes = new TextEncoder().encode(issuerId.trim());
-      await found.callTx.registerIssuer(issuerIdBytes);
+      await (found.callTx as any).registerIssuer(issuerIdBytes);
       setStatus(`Issuer "${issuerId}" registered on-chain`);
     } catch (err) {
       console.error('Register issuer error:', err);
@@ -72,7 +72,7 @@ export default function IssuerPage() {
       if (!addr || addr === '<YOUR_DEPLOYED_CONTRACT_ADDRESS>') throw new Error('Deploy contract first or replace <YOUR_DEPLOYED_CONTRACT_ADDRESS> in source code.');
       const found = await findKreditContract(connectedApi, addr);
       const subjectBytes = new TextEncoder().encode(subjectAddress.trim());
-      await found.callTx.issueCredential(subjectBytes);
+      await (found.callTx as any).issueCredential(subjectBytes);
       setStatus(`Credential issued for ${subjectAddress.slice(0, 16)}... (commitment stored on-chain)`);
     } catch (err) {
       console.error('Issue credential error:', err);
@@ -91,7 +91,7 @@ export default function IssuerPage() {
       if (!addr || addr === '<YOUR_DEPLOYED_CONTRACT_ADDRESS>') throw new Error('Deploy contract first or replace <YOUR_DEPLOYED_CONTRACT_ADDRESS> in source code.');
       const found = await findKreditContract(connectedApi, addr);
       const subjectBytes = new TextEncoder().encode(subjectAddress.trim());
-      await found.callTx.revokeCredential(subjectBytes);
+      await (found.callTx as any).revokeCredential(subjectBytes);
       setStatus(`Credential revoked for ${subjectAddress.slice(0, 16)}...`);
     } catch (err) {
       console.error('Revoke credential error:', err);

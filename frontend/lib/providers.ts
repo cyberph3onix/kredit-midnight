@@ -11,104 +11,140 @@ export type KreditCircuitName =
   | 'proveEligibility'
   | 'proveNotRevoked';
 
-export async function getConfig(connectedApi: ConnectedAPI): Promise<Configuration> {
-  return connectedApi.getConfiguration();
+let _modules: any = null;
+
+async function loadModules() {
+  if (_modules) return _modules;
+  const [contracts, networkId, zkConfigMod, proofMod, indexerMod] = await Promise.all([
+    import('@midnight-ntwrk/midnight-js-contracts'),
+    import('@midnight-ntwrk/midnight-js-network-id'),
+    import('@midnight-ntwrk/midnight-js-fetch-zk-config-provider'),
+    import('@midnight-ntwrk/midnight-js-http-client-proof-provider'),
+    import('@midnight-ntwrk/midnight-js-indexer-public-data-provider'),
+  ]);
+  _modules = {
+    deployContract: contracts.deployContract,
+    findDeployedContract: contracts.findDeployedContract,
+    setNetworkId: networkId.setNetworkId,
+    FetchZkConfigProvider: zkConfigMod.FetchZkConfigProvider,
+    httpClientProofProvider: proofMod.httpClientProofProvider,
+    indexerPublicDataProvider: indexerMod.indexerPublicDataProvider,
+  };
+  return _modules;
+}
+
+const ZK_ARTIFACTS_BASE_URL =
+  typeof window !== 'undefined'
+    ? (process.env.NEXT_PUBLIC_ZK_ARTIFACTS_URL ?? 'http://localhost:3100')
+    : 'http://localhost:3100';
+const PROOF_SERVER_URL = 'http://localhost:6300';
+
+async function createProviders(connectedApi: ConnectedAPI) {
+  const mods = await loadModules();
+  const config: Configuration = await connectedApi.getConfiguration();
+  mods.setNetworkId(config.networkId);
+
+  const zkConfigProvider = new mods.FetchZkConfigProvider(ZK_ARTIFACTS_BASE_URL);
+  const proofProvider = mods.httpClientProofProvider(PROOF_SERVER_URL, zkConfigProvider);
+  const publicDataProvider = mods.indexerPublicDataProvider(config.indexerUri, config.indexerWsUri);
+
+  const { shieldedCoinPublicKey, shieldedEncryptionPublicKey } =
+    await connectedApi.getShieldedAddresses();
+
+  const walletProvider = {
+    balanceTx: (tx: any) => connectedApi.balanceUnsealedTransaction(tx, { payFees: true }),
+    getCoinPublicKey: async () => shieldedCoinPublicKey,
+    getEncryptionPublicKey: async () => shieldedEncryptionPublicKey,
+  };
+
+  const midnightProvider = {
+    submitTx: (tx: any) => connectedApi.submitTransaction(tx),
+  };
+
+  const storage = new Map<string, any>();
+  const privateStateProvider = {
+    setContractAddress: async () => {},
+    set: async (id: string, state: any) => { storage.set(id, state); },
+    get: async (id: string) => storage.get(id) ?? null,
+    remove: async (id: string) => { storage.delete(id); },
+    clear: async () => { storage.clear(); },
+    setSigningKey: async () => {},
+    getSigningKey: async () => null,
+    removeSigningKey: async () => {},
+    clearSigningKeys: async () => {},
+    exportPrivateStates: async () => ({}),
+    importPrivateStates: async () => {},
+    exportSigningKeys: async () => ({}),
+    importSigningKeys: async () => {},
+  };
+
+  return {
+    zkConfigProvider,
+    proofProvider,
+    publicDataProvider,
+    walletProvider: walletProvider as any,
+    midnightProvider: midnightProvider as any,
+    privateStateProvider: privateStateProvider as any,
+  };
 }
 
 export async function deployKreditContract(
   connectedApi: ConnectedAPI,
   adminId: Uint8Array,
-  initialPrivateState: any,
+  _initialPrivateState: any,
 ) {
-  const config = await connectedApi.getConfiguration();
-  const { shieldedCoinPublicKey, shieldedEncryptionPublicKey } =
-    await connectedApi.getShieldedAddresses();
+  const mods = await loadModules();
+  const providers = await createProviders(connectedApi);
+  const { Contract: KreditContract, witnesses } = await import('kredit-contract');
 
-  const res = await fetch('/api/deploy', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      indexerUri: config.indexerUri,
-      indexerWsUri: config.indexerWsUri,
-      networkId: config.networkId,
-      coinPublicKey: shieldedCoinPublicKey,
-      encryptionPublicKey: shieldedEncryptionPublicKey,
-    }),
+  const compiledContract = new KreditContract(witnesses);
+
+  const initialPrivateState = {
+    adminSecretKey: crypto.getRandomValues(new Uint8Array(32)),
+    issuerSecretKey: crypto.getRandomValues(new Uint8Array(32)),
+    holderSecretKey: crypto.getRandomValues(new Uint8Array(32)),
+    score: BigInt(0),
+    salt: crypto.getRandomValues(new Uint8Array(32)),
+  };
+
+  const deployed = await mods.deployContract(providers, {
+    compiledContract,
+    privateStateId: 'kredit-main',
+    initialPrivateState,
+    args: [adminId],
   });
 
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.error || 'Deploy failed');
-  }
-
-  return res.json();
+  return {
+    contractAddress: (deployed as any).contractAddress ?? 'unknown',
+    privateState: {
+      adminSecretKey: Array.from(initialPrivateState.adminSecretKey),
+      issuerSecretKey: Array.from(initialPrivateState.issuerSecretKey),
+      holderSecretKey: Array.from(initialPrivateState.holderSecretKey),
+      score: initialPrivateState.score.toString(),
+      salt: Array.from(initialPrivateState.salt),
+    },
+  };
 }
 
 export async function findKreditContract(
   connectedApi: ConnectedAPI,
   contractAddress: string,
 ) {
-  const config = await connectedApi.getConfiguration();
-  const { shieldedCoinPublicKey, shieldedEncryptionPublicKey } =
-    await connectedApi.getShieldedAddresses();
+  const mods = await loadModules();
+  const providers = await createProviders(connectedApi);
+  const { Contract: KreditContract, witnesses } = await import('kredit-contract');
 
-  return {
-    callTx: new Proxy({} as any, {
-      get(_target, circuit: string) {
-        return async (...args: any[]) => {
-          const body: any = {
-            circuit,
-            contractAddress,
-            indexerUri: config.indexerUri,
-            indexerWsUri: config.indexerWsUri,
-            networkId: config.networkId,
-            coinPublicKey: shieldedCoinPublicKey,
-            encryptionPublicKey: shieldedEncryptionPublicKey,
-          };
+  const compiledContract = new KreditContract(witnesses);
 
-          switch (circuit) {
-            case 'registerIssuer':
-            case 'unregisterIssuer':
-              body.args = { issuerId: Array.from(args[0]) };
-              break;
-            case 'issueCredential':
-            case 'revokeCredential':
-              body.args = { subject: Array.from(args[0]) };
-              break;
-            case 'proveEligibility':
-              body.args = { threshold: args[0].toString() };
-              break;
-            case 'proveNotRevoked':
-              body.args = {};
-              break;
-            case 'rotateAdmin':
-              body.args = { newAdmin: Array.from(args[0]) };
-              break;
-            default:
-              throw new Error(`Unknown circuit: ${circuit}`);
-          }
+  const found = await mods.findDeployedContract(providers, {
+    compiledContract,
+    contractAddress,
+    privateStateId: 'kredit-main',
+  });
 
-          // Load private state from localStorage
-          const stored = localStorage.getItem('kredit-private-state');
-          if (stored) {
-            body.privateState = JSON.parse(stored);
-          }
+  return found;
+}
 
-          const res = await fetch('/api/call', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
-          });
-
-          if (!res.ok) {
-            const err = await res.json();
-            throw new Error(err.error || 'Circuit call failed');
-          }
-
-          const result = await res.json();
-          return result.result;
-        };
-      },
-    }),
-  };
+export async function getConfig(connectedApi: ConnectedAPI): Promise<Configuration> {
+  return connectedApi.getConfiguration();
 }
