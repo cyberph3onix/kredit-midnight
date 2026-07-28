@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { WalletProvider } from "@/lib/wallet";
 import ConnectWalletButton from "@/components/ConnectWalletButton";
 
 const geistSans = Geist({
@@ -29,10 +30,12 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <ConnectWalletButton />
-        <main className="container mx-auto px-4 py-8 flex-1">
-          {children}
-        </main>
+        <WalletProvider>
+          <ConnectWalletButton />
+          <main className="container mx-auto px-4 py-8 flex-1">
+            {children}
+          </main>
+        </WalletProvider>
       </body>
     </html>
   );
