@@ -1,0 +1,27 @@
+{
+  "name": "kredit-contract",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "managed/kredit/contract/index.cjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "compact": "compact compile src/kredit.compact managed/kredit",
+    "build": "rm -rf dist && tsc --project tsconfig.build.json && cp -Rf ./managed ./dist/managed",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@midnight-ntwrk/compact-runtime": "^0.8.1",
+    "vitest": "^3.2.7"
+  },
+  "dependencies": {
+    "@midnight-ntwrk/compact-js": "2.5.0"
+  }
+}

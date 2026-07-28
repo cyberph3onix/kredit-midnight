@@ -1,0 +1,185 @@
+{
+  "circuits": [
+    {
+      "name": "deriveAdminPk",
+      "pure": true,
+      "arguments": [
+        {
+          "name": "sk",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Bytes",
+        "length": 32
+      }
+    },
+    {
+      "name": "rotateAdmin",
+      "pure": false,
+      "arguments": [
+        {
+          "name": "newAdmin",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
+      "name": "registerIssuer",
+      "pure": false,
+      "arguments": [
+        {
+          "name": "issuerId",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
+      "name": "unregisterIssuer",
+      "pure": false,
+      "arguments": [
+        {
+          "name": "issuerId",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
+      "name": "issueCredential",
+      "pure": false,
+      "arguments": [
+        {
+          "name": "subject",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
+      "name": "revokeCredential",
+      "pure": false,
+      "arguments": [
+        {
+          "name": "subject",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
+      "name": "proveEligibility",
+      "pure": false,
+      "arguments": [
+        {
+          "name": "threshold",
+          "type": {
+            "type-name": "Uint",
+            "maxval": 65535
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Boolean"
+      }
+    },
+    {
+      "name": "proveNotRevoked",
+      "pure": false,
+      "arguments": [
+      ],
+      "result-type": {
+        "type-name": "Boolean"
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "adminSecret",
+      "arguments": [
+      ],
+      "result type": {
+        "type-name": "Bytes",
+        "length": 32
+      }
+    },
+    {
+      "name": "issuerSecret",
+      "arguments": [
+      ],
+      "result type": {
+        "type-name": "Bytes",
+        "length": 32
+      }
+    },
+    {
+      "name": "credentialScore",
+      "arguments": [
+      ],
+      "result type": {
+        "type-name": "Uint",
+        "maxval": 65535
+      }
+    },
+    {
+      "name": "credentialSalt",
+      "arguments": [
+      ],
+      "result type": {
+        "type-name": "Bytes",
+        "length": 32
+      }
+    },
+    {
+      "name": "holderSecret",
+      "arguments": [
+      ],
+      "result type": {
+        "type-name": "Bytes",
+        "length": 32
+      }
+    }
+  ],
+  "contracts": [
+  ]
+}
