@@ -88,13 +88,14 @@ export async function createProviders(connectedApi: ConnectedAPI): Promise<Midni
 
   const privateStateProvider = {
     setContractAddress: async () => {},
-    set: async (id: string, state: any) => storage.set(id, state),
+    set: async (id: string, state: any) => { storage.set(id, state); },
     get: async (id: string) => storage.get(id) ?? null,
-    remove: async (id: string) => storage.delete(id),
-    clear: async () => storage.clear(),
+    remove: async (id: string) => { storage.delete(id); },
+    clear: async () => { storage.clear(); },
     setSigningKey: async () => {},
     getSigningKey: async () => null,
     removeSigningKey: async () => {},
+    clearSigningKeys: async () => {},
     exportPrivateStates: async () => ({}),
     importPrivateStates: async () => {},
     exportSigningKeys: async () => ({}),
@@ -107,7 +108,7 @@ export async function createProviders(connectedApi: ConnectedAPI): Promise<Midni
     publicDataProvider,
     walletProvider: walletProvider as any,
     midnightProvider: midnightProvider as any,
-    privateStateProvider,
+    privateStateProvider: privateStateProvider as any,
   };
 }
 

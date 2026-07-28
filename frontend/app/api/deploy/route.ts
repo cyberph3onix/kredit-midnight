@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
       adminSecretKey: crypto.getRandomValues(new Uint8Array(32)),
       issuerSecretKey: crypto.getRandomValues(new Uint8Array(32)),
       holderSecretKey: crypto.getRandomValues(new Uint8Array(32)),
-      score: 0n,
+      score: BigInt(0),
       salt: crypto.getRandomValues(new Uint8Array(32)),
     };
 
@@ -55,6 +55,7 @@ export async function POST(req: NextRequest) {
           setSigningKey: async () => {},
           getSigningKey: async () => null,
           removeSigningKey: async () => {},
+          clearSigningKeys: async () => {},
           exportPrivateStates: async () => ({}),
           importPrivateStates: async () => {},
           exportSigningKeys: async () => ({}),
@@ -66,7 +67,7 @@ export async function POST(req: NextRequest) {
         privateStateId: 'kredit-main',
         initialPrivateState,
         args: [adminId],
-      },
+      } as any,
     );
 
     const contractAddress = (deployed as any).contractAddress ?? 'unknown';

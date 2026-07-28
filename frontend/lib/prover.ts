@@ -55,7 +55,7 @@ export function generateInitialPrivateState(): KreditPrivateState {
     adminSecretKey: generateRandomBytes(32),
     issuerSecretKey: generateRandomBytes(32),
     holderSecretKey: generateRandomBytes(32),
-    score: 750n,
+    score: BigInt(750),
     salt: generateRandomBytes(32),
   };
 }

@@ -63,6 +63,7 @@ export async function POST(req: NextRequest) {
           setSigningKey: async () => {},
           getSigningKey: async () => null,
           removeSigningKey: async () => {},
+          clearSigningKeys: async () => {},
           exportPrivateStates: async () => ({}),
           importPrivateStates: async () => {},
           exportSigningKeys: async () => ({}),
@@ -73,7 +74,7 @@ export async function POST(req: NextRequest) {
         compiledContract,
         contractAddress,
         privateStateId: 'kredit-main',
-      },
+      } as any,
     );
 
     let result;
