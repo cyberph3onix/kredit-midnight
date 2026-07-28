@@ -1,4 +1,4 @@
-import type { KreditPrivateState } from '../../contract/src/witnesses';
+import type { KreditPrivateState } from 'kredit-contract';
 
 const STORAGE_KEY = 'kredit-private-state';
 

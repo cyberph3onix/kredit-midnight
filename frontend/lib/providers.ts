@@ -35,9 +35,9 @@ async function loadModules() {
 
 const ZK_ARTIFACTS_BASE_URL =
   typeof window !== 'undefined'
-    ? (process.env.NEXT_PUBLIC_ZK_ARTIFACTS_URL ?? 'http://localhost:3100')
-    : 'http://localhost:3100';
-const PROOF_SERVER_URL = 'http://localhost:6300';
+    ? (process.env.NEXT_PUBLIC_ZK_ARTIFACTS_URL ?? '')
+    : '';
+const PROOF_SERVER_URL = process.env.PROOF_SERVER_URL ?? 'http://localhost:6300';
 
 async function createProviders(connectedApi: ConnectedAPI) {
   const mods = await loadModules();
