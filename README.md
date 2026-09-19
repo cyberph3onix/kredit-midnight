@@ -2,7 +2,7 @@
 
 **A Confidential Credential & Eligibility Protocol on Midnight** — Prove you qualify without revealing your score.
 
-[![CI](https://github.com/shrinjalik/kredit-midnight/actions/workflows/ci.yml/badge.svg)](https://github.com/shrinjalik/kredit-midnight/actions/workflows/ci.yml)
+[![CI](https://github.com/rue19/kredit-midnight/actions/workflows/ci.yml/badge.svg)](https://github.com/rue19/kredit-midnight/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 **Live Demo:** [https://kreditmidnight.vercel.app](https://kreditmidnight.vercel.app)
@@ -216,7 +216,7 @@ kredit-midnight/
 
 ```bash
 # Clone and install
-git clone https://github.com/shrinjalik/kredit-midnight.git
+git clone https://github.com/rue19/kredit-midnight.git
 cd kredit-midnight
 npm install
 
