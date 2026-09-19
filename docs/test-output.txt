@@ -1,0 +1,14 @@
+
+> kredit-midnight@0.1.0 test
+> cd contract && npx vitest run
+
+
+ RUN  v3.2.7 /home/shrinjali/Desktop/kredit/contract
+
+ ✓ test/kredit.test.ts (15 tests) 335ms
+
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+   Start at  23:45:41
+   Duration  818ms (transform 121ms, setup 0ms, collect 151ms, tests 335ms, environment 0ms, prepare 109ms)
+

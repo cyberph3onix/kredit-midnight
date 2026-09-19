@@ -37,46 +37,46 @@ circuit credCommit(score: Uint<16>, salt: Bytes<32>): Bytes<32> {
 
 // ─── Constructor ─────────────────────────────────────────
 constructor(adminId: Bytes<32>) {
-    contractAdmin = disclose(deriveAdminPk(adminSecret()));
+    contractAdmin = disclose(deriveAdminPk(adminSecret())); // disclose: minimal — reveals only the admin public key derivation
 }
 
 // ─── Admin Circuits ──────────────────────────────────────
 export circuit rotateAdmin(newAdmin: Bytes<32>): [] {
     assert(contractAdmin == deriveAdminPk(adminSecret()), "Not admin");
-    contractAdmin = disclose(newAdmin);
+    contractAdmin = disclose(newAdmin); // disclose: minimal — reveals only the new admin public key
 }
 
 export circuit registerIssuer(issuerId: Bytes<32>): [] {
     assert(contractAdmin == deriveAdminPk(adminSecret()), "Not admin");
     const pk = issuerPk(issuerSecret());
-    issuerRegistry.insert(disclose(pk), true);
+    issuerRegistry.insert(disclose(pk), true); // disclose: minimal — reveals only the issuer public key
 }
 
 export circuit unregisterIssuer(issuerId: Bytes<32>): [] {
     assert(contractAdmin == deriveAdminPk(adminSecret()), "Not admin");
     const pk = issuerPk(issuerSecret());
-    issuerRegistry.remove(disclose(pk));
+    issuerRegistry.remove(disclose(pk)); // disclose: minimal — reveals only the issuer public key
 }
 
 // ─── Issuer Circuits ─────────────────────────────────────
 export circuit issueCredential(subject: Bytes<32>): [] {
     const pk = issuerPk(issuerSecret());
-    assert(issuerRegistry.member(disclose(pk)), "Not registered issuer");
+    assert(issuerRegistry.member(disclose(pk)), "Not registered issuer"); // disclose: minimal — reveals only the issuer public key
 
     const score = credentialScore();
     const salt = credentialSalt();
     const commit = credCommit(score, salt);
 
-    const hKey = holderKey(disclose(subject));
+    const hKey = holderKey(disclose(subject)); // disclose: minimal — reveals only the subject address
     assert(!credentials.member(hKey), "Already exists");
-    credentials.insert(hKey, disclose(commit));
+    credentials.insert(hKey, disclose(commit)); // disclose: minimal — reveals only the credential commitment
 }
 
 export circuit revokeCredential(subject: Bytes<32>): [] {
     const pk = issuerPk(issuerSecret());
-    assert(issuerRegistry.member(disclose(pk)), "Not registered issuer");
+    assert(issuerRegistry.member(disclose(pk)), "Not registered issuer"); // disclose: minimal — reveals only the issuer public key
 
-    const hKey = holderKey(disclose(subject));
+    const hKey = holderKey(disclose(subject)); // disclose: minimal — reveals only the subject address
     assert(credentials.member(hKey), "No credential");
     revoked.insert(hKey);
 }
@@ -87,7 +87,7 @@ export circuit proveEligibility(threshold: Uint<16>): Boolean {
     const salt = credentialSalt();
     const holder = holderSecret();
 
-    const hKey = holderKey(disclose(holder));
+    const hKey = holderKey(disclose(holder)); // disclose: minimal — reveals only the holder secret
     assert(credentials.member(hKey), "No credential");
     assert(!revoked.member(hKey), "Credential revoked");
 
@@ -95,11 +95,11 @@ export circuit proveEligibility(threshold: Uint<16>): Boolean {
     const computed = credCommit(score, salt);
     assert(stored == computed, "Invalid commitment");
 
-    return disclose(score >= threshold);
+    return disclose(score >= threshold); // disclose: minimal — reveals only the boolean eligibility result
 }
 
 export circuit proveNotRevoked(): Boolean {
     const holder = holderSecret();
-    const hKey = holderKey(disclose(holder));
-    return disclose(!revoked.member(hKey));
+    const hKey = holderKey(disclose(holder)); // disclose: minimal — reveals only the holder secret
+    return disclose(!revoked.member(hKey)); // disclose: minimal — reveals only the boolean revocation status
 }

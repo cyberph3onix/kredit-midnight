@@ -172,4 +172,112 @@ describe('Kredit contract', () => {
       contractB.impureCircuits.registerIssuer(circuitCtx, issuerId);
     }).toThrow();
   });
+
+  it('proveEligibility returns true when score exactly equals threshold', () => {
+    const holderAddr = makeBytes32(0x10);
+    let { contract, circuitCtx } = createSimulator({ score: BigInt(700), holderSecret: holderAddr });
+
+    const issuerId = makeBytes32(0x01);
+    ({ context: circuitCtx } = contract.impureCircuits.registerIssuer(circuitCtx, issuerId));
+    ({ context: circuitCtx } = contract.impureCircuits.issueCredential(circuitCtx, holderAddr));
+
+    const result = contract.impureCircuits.proveEligibility(circuitCtx, BigInt(700));
+    expect(result.result).toBe(true);
+  });
+
+  it('proveEligibility returns true when score is zero and threshold is zero', () => {
+    const holderAddr = makeBytes32(0x10);
+    let { contract, circuitCtx } = createSimulator({ score: BigInt(0), holderSecret: holderAddr });
+
+    const issuerId = makeBytes32(0x01);
+    ({ context: circuitCtx } = contract.impureCircuits.registerIssuer(circuitCtx, issuerId));
+    ({ context: circuitCtx } = contract.impureCircuits.issueCredential(circuitCtx, holderAddr));
+
+    const result = contract.impureCircuits.proveEligibility(circuitCtx, BigInt(0));
+    expect(result.result).toBe(true);
+  });
+
+  it('proveEligibility returns true when score is max Uint16 and threshold equals it', () => {
+    const holderAddr = makeBytes32(0x10);
+    let { contract, circuitCtx } = createSimulator({ score: BigInt(65535), holderSecret: holderAddr });
+
+    const issuerId = makeBytes32(0x01);
+    ({ context: circuitCtx } = contract.impureCircuits.registerIssuer(circuitCtx, issuerId));
+    ({ context: circuitCtx } = contract.impureCircuits.issueCredential(circuitCtx, holderAddr));
+
+    const result = contract.impureCircuits.proveEligibility(circuitCtx, BigInt(65535));
+    expect(result.result).toBe(true);
+  });
+
+  it('unregistered issuer cannot issue credential', () => {
+    const { contract, circuitCtx } = createSimulator();
+    const subject = makeBytes32(0x10);
+    expect(() => {
+      contract.impureCircuits.issueCredential(circuitCtx, subject);
+    }).toThrow('Not registered issuer');
+  });
+
+  it('privacy: serialized ledger state does not contain score or salt', () => {
+    const holderAddr = makeBytes32(0x10);
+    let { contract, circuitCtx } = createSimulator({ score: BigInt(750), salt: makeBytes32(0xDD), holderSecret: holderAddr });
+
+    const issuerId = makeBytes32(0x01);
+    ({ context: circuitCtx } = contract.impureCircuits.registerIssuer(circuitCtx, issuerId));
+    ({ context: circuitCtx } = contract.impureCircuits.issueCredential(circuitCtx, holderAddr));
+
+    const state = ledger(circuitCtx.currentQueryContext.state);
+    const serialized = JSON.stringify(state);
+
+    expect(serialized).not.toContain('750');
+
+    const saltBytes = makeBytes32(0xDD);
+    const saltHex = Array.from(saltBytes)
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
+    expect(serialized).not.toContain(saltHex);
+  });
+
+  it('admin rotation prevents old admin from registering issuers', () => {
+    const adminSecret = makeBytes32(0xAA);
+    const newAdminPk = makeBytes32(0xFF);
+
+    const contract = new Contract({
+      adminSecret: (ctx: any) => [ctx, adminSecret],
+      issuerSecret: (ctx: any) => [ctx, makeBytes32(0xBB)],
+      credentialScore: (ctx: any) => [ctx, BigInt(750)],
+      credentialSalt: (ctx: any) => [ctx, makeBytes32(0xDD)],
+      holderSecret: (ctx: any) => [ctx, makeBytes32(0xCC)],
+    });
+
+    const adminId = makeBytes32(0x01);
+    const coinPub = getCoinPublicKey();
+    const ctorCtx = createConstructorContext({}, coinPub);
+    const initResult = contract.initialState(ctorCtx, adminId);
+
+    let circuitCtx = createCircuitContext(
+      dummyContractAddress(),
+      coinPub,
+      initResult.currentContractState,
+      initResult.currentPrivateState,
+    );
+
+    ({ context: circuitCtx } = contract.impureCircuits.rotateAdmin(circuitCtx, newAdminPk));
+
+    const issuerId = makeBytes32(0x01);
+    expect(() => {
+      contract.impureCircuits.registerIssuer(circuitCtx, issuerId);
+    }).toThrow('Not admin');
+  });
+
+  it('proveNotRevoked returns true for non-revoked credential', () => {
+    const holderAddr = makeBytes32(0x10);
+    let { contract, circuitCtx } = createSimulator({ score: BigInt(750), holderSecret: holderAddr });
+
+    const issuerId = makeBytes32(0x01);
+    ({ context: circuitCtx } = contract.impureCircuits.registerIssuer(circuitCtx, issuerId));
+    ({ context: circuitCtx } = contract.impureCircuits.issueCredential(circuitCtx, holderAddr));
+
+    const result = contract.impureCircuits.proveNotRevoked(circuitCtx);
+    expect(result.result).toBe(true);
+  });
 });
