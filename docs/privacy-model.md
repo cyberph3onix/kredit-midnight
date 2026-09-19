@@ -46,9 +46,15 @@ revoked? ─────────────────────► disc
 
 2. **Repeated proofs can be linked.** If the same holder generates multiple proofs with the same credential, an observer can correlate them.
 
-3. **Threshold leakage.** If a verifier asks `prove(score >= 700)` and it passes, the observer learns the score is at least 700. Narrowing requires multiple queries.
+3. **Threshold probing.** If a verifier asks `prove(score >= 700)` and it passes, the observer learns the score is at least 700. An adversary can binary-search by querying multiple thresholds. Mitigation: issuers can define tier-based thresholds (e.g., "eligible for Tier 1" vs "eligible for Tier 2") to reduce granularity.
 
-4. **Timing metadata.** Blockchain timestamps reveal when credentials were issued and proofs generated.
+4. **Issuer knows the raw score.** When an issuer calls `issueCredential(subject)`, they provide the raw score and salt as private witnesses. The issuer must be trusted — they learn the score during issuance. This is inherent to the credential issuance model.
+
+5. **Holder linkability.** The `holderKey = persistentHash(["kredit:holder:", address])` links the on-chain credential to a specific Midnight address. If the address is public (e.g., used for transactions), the credential is linkable to the address owner.
+
+6. **Timing metadata.** Blockchain timestamps reveal when credentials were issued and proofs generated.
+
+7. **localStorage storage.** The raw score, salt, and all secret keys are stored in the browser's localStorage. This is not encrypted at rest and is accessible to any JavaScript running on the same origin. For a production deployment, consider using encrypted storage or hardware-backed key storage.
 
 ## Commitment Scheme
 
