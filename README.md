@@ -271,8 +271,6 @@ Runs 8 contract-level tests covering:
 
 ### Deploy the Contract
 
-> **Note:** The Midnight network is currently undergoing maintenance. Deployment will be available once the network is back online.
-
 ```bash
 NODE_OPTIONS="--max-old-space-size=12288" npm run deploy -- --network preprod
 ```

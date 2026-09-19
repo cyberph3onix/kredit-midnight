@@ -50,7 +50,7 @@ export default function IssuerPage() {
     setStatus('Registering issuer...');
     try {
       const addr = contractAddr ?? getContractAddress();
-      if (!addr) throw new Error('Deploy contract first. No contract address available yet (Midnight infra is down).');
+      if (!addr) throw new Error('No contract deployed. Click "Deploy Kredit Contract" above first.');
       const found = await findKreditContract(connectedApi, addr);
       const issuerIdBytes = new TextEncoder().encode(issuerId.trim());
       await (found.callTx as any).registerIssuer(issuerIdBytes);
@@ -69,7 +69,7 @@ export default function IssuerPage() {
     setStatus('Issuing credential...');
     try {
       const addr = contractAddr ?? getContractAddress();
-      if (!addr) throw new Error('Deploy contract first. No contract address available yet (Midnight infra is down).');
+      if (!addr) throw new Error('No contract deployed. Click "Deploy Kredit Contract" above first.');
       const found = await findKreditContract(connectedApi, addr);
       const subjectBytes = new TextEncoder().encode(subjectAddress.trim());
       await (found.callTx as any).issueCredential(subjectBytes);
@@ -88,7 +88,7 @@ export default function IssuerPage() {
     setStatus('Revoking credential...');
     try {
       const addr = contractAddr ?? getContractAddress();
-      if (!addr) throw new Error('Deploy contract first. No contract address available yet (Midnight infra is down).');
+      if (!addr) throw new Error('No contract deployed. Click "Deploy Kredit Contract" above first.');
       const found = await findKreditContract(connectedApi, addr);
       const subjectBytes = new TextEncoder().encode(subjectAddress.trim());
       await (found.callTx as any).revokeCredential(subjectBytes);

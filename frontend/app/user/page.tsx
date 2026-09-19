@@ -40,7 +40,7 @@ export default function UserPage() {
     try {
       const contractAddr = localStorage.getItem(CONTRACT_ADDRESS_KEY) || CONTRACT_ADDRESS;
       if (!contractAddr) {
-        throw new Error('No contract deployed. Midnight infra is currently down — contract deployment will be available once the network is back.');
+        throw new Error('No contract deployed. Ask the admin to deploy the Kredit contract first.');
       }
 
       const found = await findKreditContract(connectedApi, contractAddr);

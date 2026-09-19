@@ -24,7 +24,7 @@ export default function VerifyPage() {
     try {
       const contractAddr = localStorage.getItem(CONTRACT_ADDRESS_KEY) || CONTRACT_ADDRESS;
       if (!contractAddr) {
-        throw new Error('No contract deployed. Midnight infra is currently down — contract deployment will be available once the network is back.');
+        throw new Error('No contract deployed. Deploy the Kredit contract first from the Issuer Console.');
       }
 
       const found = await findKreditContract(connectedApi, contractAddr);
@@ -117,13 +117,26 @@ export default function VerifyPage() {
           )}
 
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-            <h3 className="font-semibold mb-2">What You Can See</h3>
-            <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside">
-              <li>Whether a credential commitment exists for this address</li>
-              <li>Whether the holder passed the specific threshold you asked about</li>
-              <li>Whether the credential has been revoked</li>
-              <li>The raw score, salt, and issuer key are never visible</li>
-            </ul>
+            <h3 className="font-semibold mb-2">What the Verifier Sees vs. What Stays Private</h3>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="font-medium text-green-700 mb-1">Verifier CAN see:</p>
+                <ul className="text-gray-600 space-y-1 list-disc list-inside">
+                  <li>Pass/fail result (boolean)</li>
+                  <li>Credential exists on-chain</li>
+                  <li>Revocation status</li>
+                </ul>
+              </div>
+              <div>
+                <p className="font-medium text-red-700 mb-1">Verifier CANNOT see:</p>
+                <ul className="text-gray-600 space-y-1 list-disc list-inside">
+                  <li>The actual score value</li>
+                  <li>The credential salt</li>
+                  <li>The issuer&apos;s private key</li>
+                  <li>Which exact tier qualifies</li>
+                </ul>
+              </div>
+            </div>
           </div>
         </div>
       )}
