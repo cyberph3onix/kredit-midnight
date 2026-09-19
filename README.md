@@ -141,7 +141,9 @@ holderKey = persistentHash(["kredit:holder:",      address])
 | Layer | Technology |
 |---|---|
 | Contract Language | Compact 0.23 |
-| Compiler | `compact` 0.25.0 |
+| Compiler | `compact` 0.31.1 |
+| Compact JS | 2.5.1 |
+| Compact Runtime | 0.16.0 |
 | Proof Generation | Midnight Proof Server (Docker, port 6300) |
 | Node/Indexer | Midnight Preprod RPC |
 | Wallet | Lace (Midnight Preprod build, Chrome extension) |
@@ -205,7 +207,7 @@ kredit-midnight/
 
 - **Node.js** v22+
 - **Docker** (running, for proof server)
-- **Compact toolchain** (`compact update 0.25.0`)
+- **Compact toolchain** (`compact update 0.31.1`)
 - **Lace wallet** (Midnight Preprod build, Chrome extension) with Developer Mode enabled
 
 ---
@@ -337,7 +339,7 @@ The GitHub Actions workflow (`.github/workflows/ci.yml`) runs on every push/PR t
 
 ### "Proof server connection refused"
 - Make sure Docker is running
-- Start the proof server: `docker run -p 6300:6300 midnightnetwork/proof-server -- 'midnight-proof-server --network testnet'`
+- Start the proof server: `docker run -p 6300:6300 midnightnetwork/proof-server:8.1.0 -- 'midnight-proof-server --network testnet'`
 
 ### "ZK artifacts not found"
 - Start the ZK artifacts server: `cd frontend && npm run zk-server`
@@ -345,7 +347,7 @@ The GitHub Actions workflow (`.github/workflows/ci.yml`) runs on every push/PR t
 
 ### Compact compilation fails
 - Verify compact is installed: `compact --version`
-- Update to the required version: `compact update 0.25.0`
+- Update to the required version: `compact update 0.31.1`
 
 ### Build errors with Next.js
 - This project uses Next.js 16 which has breaking changes from earlier versions

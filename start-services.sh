@@ -10,15 +10,17 @@ lsof -ti:3100 | xargs kill -9 2>/dev/null
 lsof -ti:3000 | xargs kill -9 2>/dev/null
 sleep 1
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Start ZK artifacts server
 echo "[1/3] Starting ZK artifacts server on port 3100..."
-node /home/shrin/Desktop/kreditmidnight/frontend/zk-server.js &
+node "$SCRIPT_DIR/frontend/zk-server.js" &
 ZK_PID=$!
 sleep 2
 
 # Start frontend dev server
 echo "[2/3] Starting frontend on port 3000..."
-cd /home/shrin/Desktop/kreditmidnight/frontend
+cd "$SCRIPT_DIR/frontend"
 npx next dev --port 3000 &
 FE_PID=$!
 sleep 5
@@ -29,7 +31,7 @@ if curl -s -o /dev/null http://localhost:6300 2>/dev/null; then
   echo "  Proof server: OK"
 else
   echo "  Proof server: Starting docker..."
-  docker run -d -p 6300:6300 midnightnetwork/proof-server 2>/dev/null
+  docker run -d -p 6300:6300 midnightnetwork/proof-server:8.1.0 2>/dev/null
   sleep 5
 fi
 

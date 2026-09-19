@@ -22,6 +22,6 @@
     "vitest": "^3.2.7"
   },
   "dependencies": {
-    "@midnight-ntwrk/compact-js": "2.5.0"
+    "@midnight-ntwrk/compact-js": "2.5.1"
   }
 }
