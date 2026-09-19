@@ -66,6 +66,9 @@ jobs:
           name: test-output
           path: test-output.txt
 
+      - name: Build contract
+        run: cd contract && npm run build
+
       - name: Build API
         run: cd api && npm run build
 
