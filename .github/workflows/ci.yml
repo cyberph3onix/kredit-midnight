@@ -33,6 +33,14 @@ jobs:
       - name: Typecheck
         run: npx tsc --noEmit
 
+      - name: Privacy check
+        run: |
+          if grep -r "privateState" frontend/app/api/ 2>/dev/null; then
+            echo "ERROR: privateState found in API routes — privacy violation!"
+            exit 1
+          fi
+          echo "Privacy check passed: no private witness data in API routes"
+
       - name: Run tests
         run: npm test
 
