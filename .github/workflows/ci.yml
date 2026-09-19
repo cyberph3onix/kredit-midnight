@@ -31,7 +31,9 @@ jobs:
         run: npm run compact
 
       - name: Typecheck
-        run: npx tsc --noEmit
+        run: |
+          cd contract && npx tsc --noEmit
+          cd ../api && npx tsc --noEmit
 
       - name: Privacy check
         run: |
