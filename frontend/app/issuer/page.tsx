@@ -1,11 +1,10 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useWallet } from '@/lib/wallet';
 import { deployKreditContract, findKreditContract } from '@/lib/providers';
 
 const CONTRACT_ADDRESS_KEY = 'kredit-contract-address';
-const CONTRACT_ADDRESS = '';
 
 function getContractAddress(): string | null {
   if (typeof window === 'undefined') return null;
@@ -16,6 +15,13 @@ function setContractAddress(addr: string) {
   localStorage.setItem(CONTRACT_ADDRESS_KEY, addr);
 }
 
+function toBytes32(input: string): Uint8Array {
+  const raw = new TextEncoder().encode(input);
+  const buf = new Uint8Array(32);
+  buf.set(raw.slice(0, 32));
+  return buf;
+}
+
 export default function IssuerPage() {
   const { isConnected, connectedApi } = useWallet();
   const [subjectAddress, setSubjectAddress] = useState('');
@@ -24,12 +30,19 @@ export default function IssuerPage() {
   const [status, setStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    const saved = getContractAddress();
+    if (saved) setContractAddr(saved);
+  }, []);
+
   const handleDeploy = useCallback(async () => {
     if (!connectedApi) return;
     setLoading(true);
     setStatus('Deploying contract... (this may take a minute for proof generation)');
     try {
-      const adminId = new TextEncoder().encode('kredit-admin-001');
+      const raw = new TextEncoder().encode('kredit-admin-001');
+      const adminId = new Uint8Array(32);
+      adminId.set(raw);
       const deployed = await deployKreditContract(connectedApi, adminId, null);
 
       const addr = deployed.contractAddress ?? 'unknown';
@@ -52,7 +65,7 @@ export default function IssuerPage() {
       const addr = contractAddr ?? getContractAddress();
       if (!addr) throw new Error('No contract deployed. Click "Deploy Kredit Contract" above first.');
       const found = await findKreditContract(connectedApi, addr);
-      const issuerIdBytes = new TextEncoder().encode(issuerId.trim());
+      const issuerIdBytes = toBytes32(issuerId.trim());
       await (found.callTx as any).registerIssuer(issuerIdBytes);
       setStatus(`Issuer "${issuerId}" registered on-chain`);
     } catch (err) {
@@ -71,7 +84,7 @@ export default function IssuerPage() {
       const addr = contractAddr ?? getContractAddress();
       if (!addr) throw new Error('No contract deployed. Click "Deploy Kredit Contract" above first.');
       const found = await findKreditContract(connectedApi, addr);
-      const subjectBytes = new TextEncoder().encode(subjectAddress.trim());
+      const subjectBytes = toBytes32(subjectAddress.trim());
       await (found.callTx as any).issueCredential(subjectBytes);
       setStatus(`Credential issued for ${subjectAddress.slice(0, 16)}... (commitment stored on-chain)`);
     } catch (err) {
@@ -90,7 +103,7 @@ export default function IssuerPage() {
       const addr = contractAddr ?? getContractAddress();
       if (!addr) throw new Error('No contract deployed. Click "Deploy Kredit Contract" above first.');
       const found = await findKreditContract(connectedApi, addr);
-      const subjectBytes = new TextEncoder().encode(subjectAddress.trim());
+      const subjectBytes = toBytes32(subjectAddress.trim());
       await (found.callTx as any).revokeCredential(subjectBytes);
       setStatus(`Credential revoked for ${subjectAddress.slice(0, 16)}...`);
     } catch (err) {

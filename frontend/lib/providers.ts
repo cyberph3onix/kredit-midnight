@@ -85,6 +85,7 @@ async function createProviders(connectedApi: ConnectedAPI) {
     );
   }
 
+
   const walletProvider = {
     balanceTx: (tx: any) => {
       const bytes = tx.serialize();
@@ -134,8 +135,12 @@ export async function deployKreditContract(
   const mods = await loadModules();
   const providers = await createProviders(connectedApi);
   const { Contract: KreditContract, witnesses } = await import('kredit-contract');
+  const { CompiledContract } = await import('@midnight-ntwrk/compact-js');
 
-  const compiledContract = new KreditContract(witnesses);
+  const compiledContract = CompiledContract.withWitnesses(
+    CompiledContract.make('kredit', KreditContract),
+    witnesses,
+  );
 
   const initialPrivateState = {
     adminSecretKey: crypto.getRandomValues(new Uint8Array(32)),
@@ -171,8 +176,12 @@ export async function findKreditContract(
   const mods = await loadModules();
   const providers = await createProviders(connectedApi);
   const { Contract: KreditContract, witnesses } = await import('kredit-contract');
+  const { CompiledContract } = await import('@midnight-ntwrk/compact-js');
 
-  const compiledContract = new KreditContract(witnesses);
+  const compiledContract = CompiledContract.withWitnesses(
+    CompiledContract.make('kredit', KreditContract),
+    witnesses,
+  );
 
   const found = await mods.findDeployedContract(providers, {
     compiledContract,
