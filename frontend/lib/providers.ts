@@ -41,6 +41,9 @@ const ZK_ARTIFACTS_BASE_URL =
     : '';
 const PROOF_SERVER_URL = process.env.PROOF_SERVER_URL ?? 'http://localhost:6300';
 
+const _privateStateStorage = new Map<string, any>();
+const _signingKeyStorage = new Map<string, any>();
+
 async function createProviders(connectedApi: ConnectedAPI) {
   const mods = await loadModules();
   const config: Configuration = await connectedApi.getConfiguration();
@@ -95,17 +98,18 @@ async function createProviders(connectedApi: ConnectedAPI) {
     submitTx: (tx: any) => connectedApi.submitTransaction(tx),
   };
 
-  const storage = new Map<string, any>();
+  const storage = _privateStateStorage;
+  const signingKeys = _signingKeyStorage;
   const privateStateProvider = {
     setContractAddress: async () => {},
     set: async (id: string, state: any) => { storage.set(id, state); },
     get: async (id: string) => storage.get(id) ?? null,
     remove: async (id: string) => { storage.delete(id); },
     clear: async () => { storage.clear(); },
-    setSigningKey: async () => {},
-    getSigningKey: async () => null,
-    removeSigningKey: async () => {},
-    clearSigningKeys: async () => {},
+    setSigningKey: async (addr: string, key: any) => { signingKeys.set(addr, key); },
+    getSigningKey: async (addr: string) => signingKeys.get(addr) ?? null,
+    removeSigningKey: async (addr: string) => { signingKeys.delete(addr); },
+    clearSigningKeys: async () => { signingKeys.clear(); },
     exportPrivateStates: async () => ({}),
     importPrivateStates: async () => {},
     exportSigningKeys: async () => ({}),
