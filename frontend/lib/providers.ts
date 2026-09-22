@@ -58,8 +58,22 @@ async function createProviders(connectedApi: ConnectedAPI) {
   const proofProvider = mods.createProofProvider(walletProvingProvider);
   const publicDataProvider = mods.indexerPublicDataProvider(config.indexerUri, config.indexerWsUri);
 
-  const { shieldedCoinPublicKey, shieldedEncryptionPublicKey } =
-    await connectedApi.getShieldedAddresses();
+  const coinKey = addrs?.shieldedCoinPublicKey;
+  const encKey = addrs?.shieldedEncryptionPublicKey;
+
+  if (!coinKey || typeof coinKey !== 'string' || coinKey.length < 10) {
+    throw new Error(
+      'Wallet shielded coin public key is not available. ' +
+      'Make sure the Lace wallet has shielded keys initialized on the Preprod network.'
+    );
+  }
+
+  if (!encKey || typeof encKey !== 'string' || encKey.length < 10) {
+    throw new Error(
+      'Wallet encryption public key is not available. ' +
+      'Make sure the Lace wallet has shielded keys initialized on the Preprod network.'
+    );
+  }
 
   const walletProvider = {
     balanceTx: (tx: any) => connectedApi.balanceUnsealedTransaction(tx, { payFees: true }),
