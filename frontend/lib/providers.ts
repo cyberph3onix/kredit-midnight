@@ -58,6 +58,13 @@ async function createProviders(connectedApi: ConnectedAPI) {
   const proofProvider = mods.createProofProvider(walletProvingProvider);
   const publicDataProvider = mods.indexerPublicDataProvider(config.indexerUri, config.indexerWsUri);
 
+  let addrs;
+  try {
+    addrs = await connectedApi.getShieldedAddresses();
+  } catch (err) {
+    throw new Error('Failed to get shielded addresses: ' + String(err));
+  }
+
   const coinKey = addrs?.shieldedCoinPublicKey;
   const encKey = addrs?.shieldedEncryptionPublicKey;
 
@@ -77,8 +84,8 @@ async function createProviders(connectedApi: ConnectedAPI) {
 
   const walletProvider = {
     balanceTx: (tx: any) => connectedApi.balanceUnsealedTransaction(tx, { payFees: true }),
-    getCoinPublicKey: async () => shieldedCoinPublicKey,
-    getEncryptionPublicKey: async () => shieldedEncryptionPublicKey,
+    getCoinPublicKey: () => coinKey,
+    getEncryptionPublicKey: () => encKey,
   };
 
   const midnightProvider = {
