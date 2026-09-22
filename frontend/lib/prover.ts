@@ -1,16 +1,17 @@
-import type { KreditPrivateState } from 'kredit-contract';
+import type { KreditPrivateState, Witnesses } from 'kredit-contract';
 
 const STORAGE_KEY = 'kredit-private-state';
 
 export function buildProverInputs(privateState: KreditPrivateState, threshold: number) {
+  const witnesses: Witnesses<KreditPrivateState> = {
+    adminSecret: (ctx) => [ctx.privateState, privateState.adminSecretKey],
+    issuerSecret: (ctx) => [ctx.privateState, privateState.issuerSecretKey],
+    credentialScore: (ctx) => [ctx.privateState, privateState.score],
+    credentialSalt: (ctx) => [ctx.privateState, privateState.salt],
+    holderSecret: (ctx) => [ctx.privateState, privateState.holderSecretKey],
+  };
   return {
-    witnesses: {
-      adminSecret: (ctx: any) => [ctx, privateState.adminSecretKey],
-      issuerSecret: (ctx: any) => [ctx, privateState.issuerSecretKey],
-      credentialScore: (ctx: any) => [ctx, privateState.score],
-      credentialSalt: (ctx: any) => [ctx, privateState.salt],
-      holderSecret: (ctx: any) => [ctx, privateState.holderSecretKey],
-    },
+    witnesses,
     threshold: BigInt(threshold),
   };
 }

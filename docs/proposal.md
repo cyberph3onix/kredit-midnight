@@ -43,7 +43,7 @@ Kredit Protocol leverages this to issue **private numeric credentials** — a co
   4. Credential revocation
   5. Eligibility proof (threshold gate)
   6. Not-revoked proof
-  7. Batch verification helper
+  7. Issuer unregistration
 - **Next.js frontend** with 3 views: Issuer dashboard, User wallet, Verifier portal
 - **15 passing tests** covering all circuit logic and contract state transitions
 - **CI/CD pipeline** via GitHub Actions with automated test + deployment to Vercel

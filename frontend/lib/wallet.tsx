@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from 'react';
 import type { InitialAPI, ConnectedAPI, Configuration } from '@midnight-ntwrk/dapp-connector-api';
 
 declare global {
@@ -29,10 +29,12 @@ export interface WalletState {
   disconnect: () => void;
 }
 
+type WalletStateData = Omit<WalletState, 'connect' | 'disconnect'>;
+
 const WalletContext = createContext<WalletState | null>(null);
 
 export function WalletProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<WalletState>({
+  const [state, setState] = useState<WalletStateData>({
     isConnected: false,
     isConnecting: false,
     address: null,
@@ -40,8 +42,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     config: null,
     error: null,
     walletName: null,
-    connect: async () => {},
-    disconnect: () => {},
   });
 
   const connect = useCallback(async () => {
@@ -61,8 +61,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         console.log('[Wallet] Attempting to connect to preprod...');
         connectedApi = await wallet.connect('preprod');
         console.log('[Wallet] Connected successfully');
-      } catch (err: any) {
-        const msg = err?.message ?? String(err);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
         console.error('[Wallet] Connection error:', msg);
         if (msg.includes('denied') || msg.includes('rejected')) {
           throw new Error(
@@ -97,10 +97,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         error: null,
         config,
         walletName: wallet.name,
-        connect: connect,
-        disconnect: disconnect,
       });
-    } catch (err) {
+    } catch (err: unknown) {
       setState((s) => ({
         ...s,
         isConnecting: false,
@@ -118,17 +116,16 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       error: null,
       config: null,
       walletName: null,
-      connect: connect,
-      disconnect: disconnect,
     });
-  }, [connect]);
+  }, []);
 
-  useEffect(() => {
-    setState((s) => ({ ...s, connect, disconnect }));
-  }, [connect, disconnect]);
+  const value = useMemo<WalletState>(
+    () => ({ ...state, connect, disconnect }),
+    [state, connect, disconnect],
+  );
 
   return (
-    <WalletContext.Provider value={state}>
+    <WalletContext.Provider value={value}>
       {children}
     </WalletContext.Provider>
   );

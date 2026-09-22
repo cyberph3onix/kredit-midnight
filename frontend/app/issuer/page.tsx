@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { useWallet } from '@/lib/wallet';
-import { deployKreditContract, findKreditContract } from '@/lib/providers';
+import { deployKreditContract, findKreditContract, type KreditContractHandle } from '@/lib/providers';
 
 const CONTRACT_ADDRESS_KEY = 'kredit-contract-address';
 
@@ -32,6 +32,8 @@ export default function IssuerPage() {
 
   useEffect(() => {
     const saved = getContractAddress();
+    // localStorage cannot be read during render without risking a hydration mismatch
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (saved) setContractAddr(saved);
   }, []);
 
@@ -43,7 +45,7 @@ export default function IssuerPage() {
       const raw = new TextEncoder().encode('kredit-admin-001');
       const adminId = new Uint8Array(32);
       adminId.set(raw);
-      const deployed = await deployKreditContract(connectedApi, adminId, null);
+      const deployed = await deployKreditContract(connectedApi, adminId);
 
       const addr = deployed.contractAddress ?? 'unknown';
       setContractAddr(addr);
@@ -65,8 +67,9 @@ export default function IssuerPage() {
       const addr = contractAddr ?? getContractAddress();
       if (!addr) throw new Error('No contract deployed. Click "Deploy Kredit Contract" above first.');
       const found = await findKreditContract(connectedApi, addr);
+      const { callTx } = found as unknown as KreditContractHandle;
       const issuerIdBytes = toBytes32(issuerId.trim());
-      await (found.callTx as any).registerIssuer(issuerIdBytes);
+      await callTx.registerIssuer(issuerIdBytes);
       setStatus(`Issuer "${issuerId}" registered on-chain`);
     } catch (err) {
       console.error('Register issuer error:', err);
@@ -84,8 +87,9 @@ export default function IssuerPage() {
       const addr = contractAddr ?? getContractAddress();
       if (!addr) throw new Error('No contract deployed. Click "Deploy Kredit Contract" above first.');
       const found = await findKreditContract(connectedApi, addr);
+      const { callTx } = found as unknown as KreditContractHandle;
       const subjectBytes = toBytes32(subjectAddress.trim());
-      await (found.callTx as any).issueCredential(subjectBytes);
+      await callTx.issueCredential(subjectBytes);
       setStatus(`Credential issued for ${subjectAddress.slice(0, 16)}... (commitment stored on-chain)`);
     } catch (err) {
       console.error('Issue credential error:', err);
@@ -103,8 +107,9 @@ export default function IssuerPage() {
       const addr = contractAddr ?? getContractAddress();
       if (!addr) throw new Error('No contract deployed. Click "Deploy Kredit Contract" above first.');
       const found = await findKreditContract(connectedApi, addr);
+      const { callTx } = found as unknown as KreditContractHandle;
       const subjectBytes = toBytes32(subjectAddress.trim());
-      await (found.callTx as any).revokeCredential(subjectBytes);
+      await callTx.revokeCredential(subjectBytes);
       setStatus(`Credential revoked for ${subjectAddress.slice(0, 16)}...`);
     } catch (err) {
       console.error('Revoke credential error:', err);

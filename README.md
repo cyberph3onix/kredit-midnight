@@ -235,8 +235,8 @@ kredit-midnight/
 │   │   ├── providers.ts                # Midnight SDK provider setup
 │   │   └── prover.ts                   # Private state + proof builder
 │   ├── public/
-│   │   ├── keys/                       # → symlink to contract/managed/kredit/keys
-│   │   └── zkir/                       # → symlink to contract/managed/kredit/zkir
+│   │   ├── keys/                       # compiled prover/verifier keys, copied from contract/managed
+│   │   └── zkir/                       # compiled ZKIR circuits, copied from contract/managed
 │   └── package.json
 ├── docs/
 │   ├── architecture.md
@@ -261,8 +261,7 @@ cp .env.example frontend/.env.local
 
 | Variable | Default | Description |
 |---|---|---|
-| `PROOF_SERVER_URL` | `http://localhost:6300` | Midnight proof server URL |
-| `NEXT_PUBLIC_ZK_ARTIFACTS_URL` | _(empty = same origin)_ | Client-side ZK artifacts URL |
+| `NEXT_PUBLIC_ZK_ARTIFACTS_URL` | _(empty = same origin)_ | Client-side ZK artifacts URL (served from `frontend/public`) |
 
 ---
 
@@ -292,9 +291,9 @@ GitHub Actions runs on every push/PR to `main`:
 - The wallet needs shielded keys initialized
 - Check if the wallet has completed initial setup on Preprod
 
-### "Proof server connection refused"
-- Make sure Docker is running
-- Start: `docker run -p 6300:6300 midnightnetwork/proof-server:8.1.0`
+### Proof generation fails
+- Proofs are generated locally by the connected wallet (Lace) — the wallet must have
+  shielded keys initialized on the Midnight Preprod network
 
 ### Compact compilation fails
 - Verify: `compact --version`

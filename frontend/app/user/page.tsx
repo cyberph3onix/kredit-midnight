@@ -2,8 +2,8 @@
 
 import { useState, useCallback } from 'react';
 import { useWallet } from '@/lib/wallet';
-import { findKreditContract } from '@/lib/providers';
-import { loadPrivateState, generateInitialPrivateState, savePrivateState } from '@/lib/prover';
+import { findKreditContract, type KreditContractHandle } from '@/lib/providers';
+import { generateInitialPrivateState, savePrivateState } from '@/lib/prover';
 
 const CONTRACT_ADDRESS_KEY = 'kredit-contract-address';
 const CONTRACT_ADDRESS = '';
@@ -44,7 +44,8 @@ export default function UserPage() {
       }
 
       const found = await findKreditContract(connectedApi, contractAddr);
-      const eligible = await (found.callTx as any).proveEligibility(BigInt(t));
+      const { callTx } = found as unknown as KreditContractHandle;
+      const eligible = await callTx.proveEligibility(BigInt(t));
       setResult({ eligible: Boolean(eligible), threshold: t });
     } catch (err) {
       console.error('Prove error:', err);

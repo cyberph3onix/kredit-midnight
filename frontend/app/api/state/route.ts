@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { setNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
-import { FetchZkConfigProvider } from '@midnight-ntwrk/midnight-js-fetch-zk-config-provider';
 import { indexerPublicDataProvider } from '@midnight-ntwrk/midnight-js-indexer-public-data-provider';
-
-const ZK_ARTIFACTS_BASE_URL = process.env.ZK_ARTIFACTS_URL ?? '';
 
 export async function GET(req: NextRequest) {
   try {
@@ -26,9 +23,9 @@ export async function GET(req: NextRequest) {
     const state = await publicDataProvider.queryContractState(contractAddress);
 
     return NextResponse.json({ success: true, state });
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json(
-      { success: false, error: err.message ?? String(err) },
+      { success: false, error: err instanceof Error ? err.message : String(err) },
       { status: 500 },
     );
   }

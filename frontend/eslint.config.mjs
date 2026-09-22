@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Plain Node.js script (CommonJS), not part of the bundler/TS frontend
+    "zk-server.js",
   ]),
 ]);
 

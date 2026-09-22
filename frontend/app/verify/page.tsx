@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { useWallet } from '@/lib/wallet';
-import { findKreditContract } from '@/lib/providers';
+import { findKreditContract, type KreditContractHandle } from '@/lib/providers';
 
 const CONTRACT_ADDRESS_KEY = 'kredit-contract-address';
 const CONTRACT_ADDRESS = '';
@@ -28,10 +28,11 @@ export default function VerifyPage() {
       }
 
       const found = await findKreditContract(connectedApi, contractAddr);
+      const { callTx } = found as unknown as KreditContractHandle;
       const t = BigInt(threshold.trim());
 
-      const eligible = await (found.callTx as any).proveEligibility(t);
-      const notRevoked = await (found.callTx as any).proveNotRevoked();
+      const eligible = await callTx.proveEligibility(t);
+      const notRevoked = await callTx.proveNotRevoked();
 
       setResult({
         eligible: Boolean(eligible),

@@ -1,5 +1,5 @@
 import type { NextConfig } from "next";
-import { resolve } from "path";
+import path from "node:path";
 
 const nextConfig: NextConfig = {
   serverExternalPackages: [
@@ -19,6 +19,7 @@ const nextConfig: NextConfig = {
     '@midnight-ntwrk/ledger-v8',
   ],
   turbopack: {
+    root: path.resolve(process.cwd(), '..'),
     resolveAlias: {
       'isomorphic-ws': './isomorphic-ws-shim.js',
     },
