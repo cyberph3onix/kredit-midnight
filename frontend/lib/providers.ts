@@ -15,12 +15,13 @@ let _modules: any = null;
 
 async function loadModules() {
   if (_modules) return _modules;
-  const [contracts, networkId, zkConfigMod, proofMod, indexerMod] = await Promise.all([
+  const [contracts, networkId, zkConfigMod, proofMod, indexerMod, typesMod] = await Promise.all([
     import('@midnight-ntwrk/midnight-js-contracts'),
     import('@midnight-ntwrk/midnight-js-network-id'),
     import('@midnight-ntwrk/midnight-js-fetch-zk-config-provider'),
     import('@midnight-ntwrk/midnight-js-http-client-proof-provider'),
     import('@midnight-ntwrk/midnight-js-indexer-public-data-provider'),
+    import('@midnight-ntwrk/midnight-js-types'),
   ]);
   _modules = {
     deployContract: contracts.deployContract,
@@ -29,6 +30,7 @@ async function loadModules() {
     FetchZkConfigProvider: zkConfigMod.FetchZkConfigProvider,
     httpClientProofProvider: proofMod.httpClientProofProvider,
     indexerPublicDataProvider: indexerMod.indexerPublicDataProvider,
+    createProofProvider: typesMod.createProofProvider,
   };
   return _modules;
 }
