@@ -47,7 +47,15 @@ async function createProviders(connectedApi: ConnectedAPI) {
   mods.setNetworkId(config.networkId);
 
   const zkConfigProvider = new mods.FetchZkConfigProvider(ZK_ARTIFACTS_BASE_URL);
-  const proofProvider = mods.httpClientProofProvider(PROOF_SERVER_URL, zkConfigProvider);
+
+  const keyMaterialProvider = {
+    getZKIR: (keyLocation: string) => zkConfigProvider.getZKIR(keyLocation),
+    getProverKey: (keyLocation: string) => zkConfigProvider.getProverKey(keyLocation),
+    getVerifierKey: (keyLocation: string) => zkConfigProvider.getVerifierKey(keyLocation),
+  };
+
+  const walletProvingProvider = await connectedApi.getProvingProvider(keyMaterialProvider);
+  const proofProvider = mods.createProofProvider(walletProvingProvider);
   const publicDataProvider = mods.indexerPublicDataProvider(config.indexerUri, config.indexerWsUri);
 
   const { shieldedCoinPublicKey, shieldedEncryptionPublicKey } =
