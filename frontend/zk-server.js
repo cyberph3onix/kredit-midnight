@@ -16,6 +16,7 @@ const MIME_TYPES = {
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, `http://localhost:${PORT}`);
   const filePath = decodeURIComponent(url.pathname);
+  console.log(`[ZK] ${req.method} ${filePath}`);
 
   let fullPath;
   if (filePath.startsWith('/keys/')) {
