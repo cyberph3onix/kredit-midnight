@@ -58,14 +58,24 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       const wallet = wallets[0];
       let connectedApi: ConnectedAPI;
       try {
+        console.log('[Wallet] Attempting to connect to preprod...');
         connectedApi = await wallet.connect('preprod');
+        console.log('[Wallet] Connected successfully');
       } catch (err: any) {
         const msg = err?.message ?? String(err);
+        console.error('[Wallet] Connection error:', msg);
         if (msg.includes('denied') || msg.includes('rejected')) {
           throw new Error(
             'Connection denied by wallet. Please open the Lace wallet extension, ' +
             'go to Settings > DApps, and make sure connections are allowed. ' +
             'You may also need to enable Developer Mode.'
+          );
+        }
+        if (msg.includes('mismatch') || msg.includes('network')) {
+          throw new Error(
+            `Network mismatch: the wallet is on a different network than "preprod". ` +
+            `Open Lace wallet, go to Settings > Network, and switch to the Midnight Preprod network. ` +
+            `Original error: ${msg}`
           );
         }
         throw new Error(`Wallet connection failed: ${msg}`);
