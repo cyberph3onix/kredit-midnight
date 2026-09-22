@@ -83,7 +83,10 @@ async function createProviders(connectedApi: ConnectedAPI) {
   }
 
   const walletProvider = {
-    balanceTx: (tx: any) => connectedApi.balanceUnsealedTransaction(tx, { payFees: true }),
+    balanceTx: (tx: any) => {
+      const bytes = tx.serialize();
+      return connectedApi.balanceUnsealedTransaction(bytes as any, { payFees: true });
+    },
     getCoinPublicKey: () => coinKey,
     getEncryptionPublicKey: () => encKey,
   };
