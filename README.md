@@ -1,11 +1,13 @@
 # Kredit Protocol
 
-**A Confidential Credential & Eligibility Protocol on Midnight** — Prove you qualify without revealing your score.
+**Confidential Credential & Eligibility Protocol on Midnight Network**
 
 [![CI](https://github.com/rue19/kredit-midnight/actions/workflows/ci.yml/badge.svg)](https://github.com/rue19/kredit-midnight/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 **Live Demo:** [https://kreditmidnight.vercel.app](https://kreditmidnight.vercel.app)
+
+> Prove you qualify for a loan — without revealing your credit score.
 
 ---
 
@@ -21,48 +23,25 @@ An issuer (e.g., a bank) issues a credential commitment on-chain. The user holds
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        FRONTEND (Next.js)                        │
-│   Issuer Console          User View           Verifier View     │
-│   - issue credential      - generate keys     - request proof   │
-│   - revoke credential     - enter score       - see pass/fail   │
-│                            - generate proof                      │
-└──────────────────────┬──────────────┬──────────────┬────────────┘
-                       │              │              │
-               Midnight.js SDK   DApp Connector  Midnight.js SDK
-                       │              │              │
-                       ▼              ▼              ▼
+│                      FRONTEND (Next.js)                          │
+│  Issuer Console          User View           Verifier View       │
+│  - deploy contract       - generate keys     - request proof     │
+│  - register issuer       - enter score       - see pass/fail     │
+│  - issue/revoke          - generate proof                        │
+└──────────────────────┬──────────────┬────────────────────────────┘
+                       │              │
+               Midnight.js SDK   DApp Connector
+                       │              │
+                       ▼              ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                       LACE WALLET (Preprod)                      │
-│       holds keys  ·  signs txs  ·  talks to Proof Server        │
-└──────────────────────┬──────────────────────────────┬───────────┘
-                       │                              │
-                       ▼                              ▼
-┌─────────────────────────────┐    ┌──────────────────────────────┐
-│       PROOF SERVER           │    │      MIDNIGHT NODE            │
-│  (Docker, port 6300)         │    │   + INDEXER (Preprod RPC)    │
-│  generates/verifies ZK       │◄──►│  executes circuits, stores   │
-│  proofs                      │    │  public ledger state          │
-└─────────────────────────────┘    └──────────────────────────────┘
-                       │
-                       ▼
+│                    LACE WALLET (Preprod)                         │
+│    holds keys · signs txs · generates ZK proofs internally      │
+└──────────────────────────────┬──────────────────────────────────┘
+                               │
+                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                    KREDIT COMPACT CONTRACT                        │
-│                                                                   │
-│  PUBLIC LEDGER STATE              PRIVATE WITNESS (never on-chain)│
-│  ├─ credentials: Map<addr, Hash>  ├─ rawScore: Uint<16>          │
-│  ├─ issuerRegistry: Map<addr, ?>  ├─ salt: Bytes<32>             │
-│  ├─ revoked: Set<addr>            ├─ holderSecret: Bytes<32>     │
-│  └─ contractAdmin: Bytes<32>      ├─ issuerSecret: Bytes<32>     │
-│                                   └─ adminSecret: Bytes<32>      │
-│                                                                   │
-│  CIRCUITS                                                        │
-│  ├─ rotateAdmin(newAdmin)              [admin-only]               │
-│  ├─ registerIssuer(issuerId)           [admin-only]               │
-│  ├─ unregisterIssuer(issuerId)         [admin-only]               │
-│  ├─ issueCredential(subject)           [issuer-only]              │
-│  ├─ revokeCredential(subject)          [issuer-only]              │
-│  ├─ proveEligibility(threshold) → Bool [disclose() boundary]      │
-│  └─ proveNotRevoked() → Bool                                      │
+│                 MIDNIGHT NODE + INDEXER                           │
+│          executes circuits, stores public ledger state            │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -70,8 +49,8 @@ An issuer (e.g., a bank) issues a credential commitment on-chain. The user holds
 
 1. **Deploy** — Admin deploys the Kredit contract on Midnight Preprod.
 2. **Register Issuer** — Admin registers trusted issuers (banks, KYC providers).
-3. **Issue Credential** — Issuer issues a credential commitment (hash of `score + salt`). The raw score never touches the chain.
-4. **User Holds Secrets** — The user's score, salt, and keys are stored locally in the browser (localStorage).
+3. **Issue Credential** — Issuer issues a credential commitment (`persistentCommit(score, salt)`). The raw score never touches the chain.
+4. **User Holds Secrets** — The user's score, salt, and keys are stored locally in the browser.
 5. **Generate Proof** — When a verifier requests a check, the user generates a ZK proof that `score >= threshold`. Only the boolean result is disclosed.
 6. **Verify** — The verifier sees pass/fail and revocation status — never the actual score.
 
@@ -97,31 +76,15 @@ An issuer (e.g., a bank) issues a credential commitment on-chain. The user holds
 | Issuer key | The issuer's private signing material |
 | Holder secret | The holder's domain-separated secret key |
 | Admin secret | The admin's private key |
-| Qualifying tier | Which exact threshold tier the user qualifies for |
 
-### Known Limitations & Residual Leakage
+### Known Limitations
 
 | Limitation | Impact |
 |---|---|
-| **Holder linkability** | Domain-separated keys allow an observer to link multiple proof requests to the same holder across sessions |
-| **Threshold probing** | An adversary can perform binary search by issuing requests at different thresholds to narrow the raw score |
-| **Issuer knows the raw score** | When an issuer issues a credential, they observe the raw score in the witness |
-| **Timing metadata** | On-chain transaction timestamps reveal when credentials are issued or proofs are generated |
-| **Client-side storage** | `localStorage` stores secrets (score, salt, keys) in plaintext — vulnerable to XSS or browser compromise |
-
-### Commitment Scheme
-
-Kredit uses `persistentCommit<Uint<16>>(score, salt)` — a SHA-256 hash with a random 32-byte salt. The salt ensures the commitment is computationally hiding (256-bit randomness). The same salt must never be reused across credentials.
-
-### Identity Derivation
-
-All identities use domain-separated `persistentHash`:
-
-```
-adminPk   = persistentHash(["kredit:admin:pk:",   secretKey])
-issuerPk  = persistentHash(["kredit:issuer:pk:",  secretKey])
-holderKey = persistentHash(["kredit:holder:",      address])
-```
+| Holder linkability | Domain-separated keys allow linking multiple proof requests to the same holder |
+| Threshold probing | Adversary can perform binary search to narrow the raw score |
+| Issuer knows the raw score | When issuing a credential, the issuer observes the raw score |
+| Client-side storage | `localStorage` stores secrets in plaintext — vulnerable to XSS |
 
 ---
 
@@ -131,32 +94,32 @@ holderKey = persistentHash(["kredit:holder:",      address])
 
 | Circuit | Access | Description |
 |---|---|---|
-| `rotateAdmin(newAdmin)` | Admin | Transfer admin role to a new public key |
-| `registerIssuer(issuerId)` | Admin | Add a trusted issuer to the registry |
-| `unregisterIssuer(issuerId)` | Admin | Remove an issuer from the registry |
-| `issueCredential(subject)` | Issuer | Store a credential commitment on-chain |
-| `revokeCredential(subject)` | Issuer | Mark a credential as revoked |
-| `proveEligibility(threshold) → Boolean` | Holder | Prove `score >= threshold` (only the boolean is disclosed) |
-| `proveNotRevoked() → Boolean` | Holder | Prove credential is not revoked |
+| `rotateAdmin(newAdmin)` | Admin | Transfer admin role |
+| `registerIssuer(issuerId)` | Admin | Add trusted issuer |
+| `unregisterIssuer(issuerId)` | Admin | Remove issuer |
+| `issueCredential(subject)` | Issuer | Store credential commitment |
+| `revokeCredential(subject)` | Issuer | Mark credential as revoked |
+| `proveEligibility(threshold) → Bool` | Holder | Prove `score >= threshold` |
+| `proveNotRevoked() → Bool` | Holder | Prove credential is not revoked |
 
 ### Public Ledger State
 
 | Field | Type | Description |
 |---|---|---|
-| `contractAdmin` | `Bytes<32>` | Domain-separated hash of admin's secret key |
+| `contractAdmin` | `Bytes<32>` | Domain-separated admin public key |
 | `credentials` | `Map<Bytes<32>, Bytes<32>>` | Holder key → commitment hash |
-| `issuerRegistry` | `Map<Bytes<32>, Boolean>` | Issuer pk → registered (true) |
-| `revoked` | `Set<Bytes<32>>` | Set of revoked holder keys |
+| `issuerRegistry` | `Map<Bytes<32>, Boolean>` | Issuer pk → registered |
+| `revoked` | `Set<Bytes<32>>` | Revoked holder keys |
 
-### Private Witnesses (never leave the user's machine)
+### Private Witnesses (never on-chain)
 
-| Witness | Type | Description |
-|---|---|---|
-| `adminSecret()` | `Bytes<32>` | Admin's 32-byte secret key |
-| `issuerSecret()` | `Bytes<32>` | Issuer's 32-byte secret key |
-| `credentialScore()` | `Uint<16>` | The raw credit score |
-| `credentialSalt()` | `Bytes<32>` | Random salt for commitment |
-| `holderSecret()` | `Bytes<32>` | Holder's 32-byte secret key |
+| Witness | Type |
+|---|---|
+| `adminSecret()` | `Bytes<32>` |
+| `issuerSecret()` | `Bytes<32>` |
+| `credentialScore()` | `Uint<16>` |
+| `credentialSalt()` | `Bytes<32>` |
+| `holderSecret()` | `Bytes<32>` |
 
 ---
 
@@ -170,8 +133,6 @@ holderKey = persistentHash(["kredit:holder:",      address])
 | Compact Runtime | 0.16.0 |
 | Midnight.js | 4.1.1 |
 | DApp Connector API | 4.0.1 |
-| Proof Server | 8.1.0 |
-| Node/Indexer | Midnight Preprod RPC |
 | Wallet | Lace (Midnight Preprod build, Chrome extension) |
 | SDK | `@midnight-ntwrk/midnight-js-*` |
 | Frontend | Next.js 16 + React 19 + TypeScript + Tailwind CSS 4 |
@@ -206,26 +167,24 @@ npm run compact
 # Run tests
 npm test
 
-# Build everything
-npm run build
-
-# Start all services (ZK server + proof server + frontend)
-./start-services.sh
+# Start frontend
+cd frontend && npx next dev --port 3000 --hostname 0.0.0.0
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-### What `start-services.sh` Does
+### Wallet Setup
 
-1. Starts the ZK artifacts HTTP server on port 3100 (serves compiled keys/ZKIR)
-2. Starts the Next.js frontend on port 3000
-3. Starts the Midnight proof server Docker container on port 6300
+1. Install the **Lace wallet** Chrome extension (Midnight Preprod build)
+2. Enable **Developer Mode** in Lace wallet settings
+3. Switch to the **Midnight Preprod** network
+4. Ensure your wallet has shielded keys initialized
 
 ---
 
 ## Test Suite
 
-The contract includes **15 tests** covering the full lifecycle:
+15 tests covering the full lifecycle:
 
 | # | Test | Category |
 |---|---|---|
@@ -237,11 +196,11 @@ The contract includes **15 tests** covering the full lifecycle:
 | 6 | Revoked credential fails eligibility | Revocation |
 | 7 | Only registered issuer can issue credentials | Access |
 | 8 | Only admin can register issuers | Access |
-| 9 | ProveEligibility returns true when score exactly equals threshold | Proof |
-| 10 | ProveEligibility returns true when score is zero and threshold is zero | Edge |
-| 11 | ProveEligibility returns true when score is max Uint16 and threshold equals it | Edge |
+| 9 | ProveEligibility returns true at exact threshold | Proof |
+| 10 | ProveEligibility returns true for zero score/threshold | Edge |
+| 11 | ProveEligibility returns true for max Uint16 | Edge |
 | 12 | Unregistered issuer cannot issue credential | Access |
-| 13 | Privacy: serialized ledger state does not contain score or salt | Privacy |
+| 13 | Privacy: ledger state does not contain score or salt | Privacy |
 | 14 | Admin rotation prevents old admin from registering issuers | Admin |
 | 15 | ProveNotRevoked returns true for non-revoked credential | Revocation |
 
@@ -253,44 +212,41 @@ The contract includes **15 tests** covering the full lifecycle:
 kredit-midnight/
 ├── contract/
 │   ├── src/
-│   │   ├── kredit.compact          # Smart contract (7 circuits)
-│   │   ├── witnesses.ts            # TypeScript witness implementations
-│   │   └── index.ts                # Package exports
+│   │   ├── kredit.compact              # Smart contract (7 circuits)
+│   │   ├── witnesses.ts                # TypeScript witness implementations
+│   │   └── index.ts                    # Package exports
 │   ├── test/
-│   │   └── kredit.test.ts          # Contract unit tests (15 tests)
-│   ├── managed/kredit/             # Compiled artifacts (keys, zkir, contract)
+│   │   └── kredit.test.ts              # Contract unit tests (15 tests)
+│   ├── managed/kredit/                 # Compiled artifacts (keys, zkir, contract)
 │   └── package.json
 ├── api/
-│   └── src/index.ts                # Shared types (KreditProviders, KreditPrivateState)
+│   └── src/index.ts                    # Shared types
 ├── frontend/
 │   ├── app/
-│   │   ├── page.tsx                # Landing page with dithering shader
-│   │   ├── issuer/page.tsx         # Issuer Console (deploy, register, issue, revoke)
-│   │   ├── user/page.tsx           # User View (key generation, eligibility proof)
-│   │   ├── verify/page.tsx         # Verifier View (check eligibility + revocation)
-│   │   └── api/                    # Server-side API routes
-│   │       ├── deploy/route.ts     # Contract deployment endpoint
-│   │       ├── call/route.ts       # Contract call endpoint
-│   │       └── state/route.ts      # Contract state query endpoint
+│   │   ├── page.tsx                    # Landing page with dithering shader
+│   │   ├── issuer/page.tsx             # Issuer Console (deploy, register, issue, revoke)
+│   │   ├── user/page.tsx               # User View (key generation, eligibility proof)
+│   │   └── verify/page.tsx             # Verifier View
 │   ├── components/
-│   │   ├── ConnectWalletButton.tsx # Wallet connect/disconnect button
-│   │   └── ui/dithering-shader.tsx # WebGL dithering animation component
+│   │   ├── ConnectWalletButton.tsx     # Wallet connect button
+│   │   └── ui/dithering-shader.tsx     # WebGL animation
 │   ├── lib/
-│   │   ├── wallet.tsx              # useWallet() hook (Lace DApp Connector)
-│   │   ├── providers.ts            # Midnight SDK provider setup
-│   │   └── prover.ts               # Private state management + proof builder
-│   ├── public/keys/                # Compiled ZK prover/verifier keys
-│   ├── public/zkir/                # Compiled ZK intermediate representations
-│   ├── isomorphic-ws-shim.js       # WebSocket shim for browser compatibility
+│   │   ├── wallet.tsx                  # useWallet() hook (Lace DApp Connector)
+│   │   ├── providers.ts                # Midnight SDK provider setup
+│   │   └── prover.ts                   # Private state + proof builder
+│   ├── public/
+│   │   ├── keys/                       # → symlink to contract/managed/kredit/keys
+│   │   └── zkir/                       # → symlink to contract/managed/kredit/zkir
 │   └── package.json
 ├── docs/
-│   ├── architecture.md             # System architecture details
-│   └── privacy-model.md            # Privacy model with data flow diagrams
-├── .github/workflows/ci.yml        # CI/CD pipeline
-├── start-services.sh               # One-command local dev startup
-├── kredit-midnight-prd.md          # Product Requirements Document
-├── .env.example                    # Environment variable template
-└── package.json                    # Root workspace config
+│   ├── architecture.md
+│   ├── privacy-model.md
+│   ├── toolchain.md                    # Version source of truth
+│   └── proposal.md                     # Level 3 proposal
+├── .github/workflows/ci.yml            # CI/CD pipeline
+├── start-services.sh                   # Local dev startup script
+├── .env.example
+└── package.json
 ```
 
 ---
@@ -305,109 +261,71 @@ cp .env.example frontend/.env.local
 
 | Variable | Default | Description |
 |---|---|---|
-| `PROOF_SERVER_URL` | `http://localhost:6300` | URL of the Midnight proof server |
+| `PROOF_SERVER_URL` | `http://localhost:6300` | Midnight proof server URL |
 | `NEXT_PUBLIC_ZK_ARTIFACTS_URL` | _(empty = same origin)_ | Client-side ZK artifacts URL |
-| `ZK_ARTIFACTS_URL` | _(empty = same origin)_ | Server-side ZK artifacts URL |
-| `CONTRACT_ADDRESS` | _(empty)_ | Deployed contract address (set after deployment) |
-
-### Vercel Environment Variables
-
-For the production deployment, set these in the [Vercel dashboard](https://vercel.com/shrinjali-kumars-projects/kreditmidnight/settings/environment-variables):
-
-| Variable | Value |
-|---|---|
-| `PROOF_SERVER_URL` | URL of a hosted Midnight proof server |
-| `CONTRACT_ADDRESS` | Address of the deployed contract |
-
----
-
-## API Routes
-
-| Route | Method | Description |
-|---|---|---|
-| `/api/deploy` | POST | Deploy a new Kredit contract instance |
-| `/api/call` | POST | Call a contract circuit (registerIssuer, issueCredential, proveEligibility, etc.) |
-| `/api/state` | GET | Query on-chain contract state by address |
-
----
-
-## Manual Steps
-
-### Compile the Contract
-
-```bash
-npm run compact
-```
-
-Compiles `contract/src/kredit.compact` and generates circuit artifacts in `contract/managed/kredit/`.
-
-### Run Tests
-
-```bash
-npm test
-```
-
-### Deploy the Contract
-
-```bash
-NODE_OPTIONS="--max-old-space-size=12288" npm run deploy -- --network preprod
-```
-
-This requires the Lace wallet to be connected and the proof server running.
 
 ---
 
 ## CI/CD
 
-The GitHub Actions workflow (`.github/workflows/ci.yml`) runs on every push/PR to `main`:
+GitHub Actions runs on every push/PR to `main`:
 
-1. Checks out code
-2. Sets up Node.js 22
-3. Installs Compact toolchain + dependencies
-4. Compiles the contract
-5. Runs the test suite
-6. Builds the API and frontend
+1. Checkout code
+2. Setup Node.js 22
+3. Install Compact toolchain + dependencies
+4. Compile contract
+5. Run test suite
+6. Build API and frontend
 
 ---
 
 ## Troubleshooting
 
 ### "No Midnight wallet detected"
-- Install the Lace wallet Chrome extension
+- Install the Lace wallet Chrome extension (Midnight Preprod build)
 - Enable **Developer Mode** in Lace wallet settings
-- Ensure you are connected to the **Preprod** network
+
+### "Network mismatch"
+- Open Lace wallet → Settings → Network → Switch to **Midnight Preprod**
+
+### "shielded coin public key is not available"
+- The wallet needs shielded keys initialized
+- Check if the wallet has completed initial setup on Preprod
 
 ### "Proof server connection refused"
 - Make sure Docker is running
-- Start the proof server: `docker run -p 6300:6300 midnightnetwork/proof-server:8.1.0 -- 'midnight-proof-server --network testnet'`
-
-### "ZK artifacts not found"
-- Start the ZK artifacts server: `cd frontend && npm run zk-server`
-- Verify it's running: `curl http://localhost:3100`
+- Start: `docker run -p 6300:6300 midnightnetwork/proof-server:8.1.0`
 
 ### Compact compilation fails
-- Verify compact is installed: `compact --version`
-- Update to the required version: `compact update 0.31.1`
+- Verify: `compact --version`
+- Update: `compact update 0.31.1`
 
-### Build errors with Next.js
-- This project uses Next.js 16 which has breaking changes from earlier versions
+### Build errors
+- This project uses Next.js 16 with breaking changes
 - See `frontend/AGENTS.md` for important notes
-
-### Vercel deployment shows 404
-- Ensure the Vercel project has `framework: "nextjs"` set
-- Check that the build command includes `cd contract && npm run build` before the frontend build
 
 ---
 
-## Screenshots
+## Submission
 
-### Home Page
+### Moonshots Level 3 — Confidential Credential & Eligibility Protocol
 
-![Home — Kredit Protocol landing with dithering shader](screenshots/home.png)
+**Checklist:**
 
-### Issuer Console
+- [x] Compact contract with 7 circuits on Preprod (runtime 0.16.0)
+- [x] 15 passing tests (Vitest + compact-runtime simulator)
+- [x] Working frontend on Preprod (Next.js + Lace wallet integration)
+- [x] ZK proof generation for eligibility and revocation checks
+- [x] Privacy model with selective disclosure
+- [x] CI/CD pipeline (GitHub Actions)
+- [x] Documentation (README, architecture, privacy model, proposal)
 
-![Issuer Console — Deploy contract, register issuers, issue/revoke credentials](screenshots/issuer.png)
+**Key SDK Fixes:**
+- CompiledContract wrapper (`CompiledContract.make()` + `withWitnesses()`)
+- Wallet proving provider (`getProvingProvider()` + `createProofProvider()`)
+- Synchronous `getCoinPublicKey`/`getEncryptionPublicKey` per SDK requirements
+- Transaction serialization for `balanceUnsealedTransaction()`
+- `toBytes32()` padding for all `Bytes<32>` circuit arguments
 
 ---
 
