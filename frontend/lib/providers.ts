@@ -46,7 +46,7 @@ async function createProviders(connectedApi: ConnectedAPI) {
   const config: Configuration = await connectedApi.getConfiguration();
   mods.setNetworkId(config.networkId);
 
-  const zkConfigProvider = new mods.FetchZkConfigProvider(ZK_ARTIFACTS_BASE_URL);
+  const zkConfigProvider = new mods.FetchZkConfigProvider(ZK_ARTIFACTS_BASE_URL, globalThis.fetch.bind(globalThis));
 
   const keyMaterialProvider = {
     getZKIR: (keyLocation: string) => zkConfigProvider.getZKIR(keyLocation),
