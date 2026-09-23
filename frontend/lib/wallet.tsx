@@ -55,11 +55,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         );
       }
 
+      console.log('[Wallet] Detected wallets:', wallets.map((w) => `${w.name} (api ${w.apiVersion})`));
       const wallet = wallets[0];
       let connectedApi: ConnectedAPI;
       try {
-        console.log('[Wallet] Attempting to connect to preprod...');
-        connectedApi = await wallet.connect('preprod');
+        console.log('[Wallet] Attempting to connect to preview...');
+        connectedApi = await wallet.connect('preview');
         console.log('[Wallet] Connected successfully');
       } catch (err: any) {
         const msg = err?.message ?? String(err);
@@ -73,8 +74,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         }
         if (msg.includes('mismatch') || msg.includes('network')) {
           throw new Error(
-            `Network mismatch: the wallet is on a different network than "preprod". ` +
-            `Open Lace wallet, go to Settings > Network, and switch to the Midnight Preprod network. ` +
+            `Network mismatch: the wallet is on a different network than "preview". ` +
+            `Open Lace wallet, go to Settings > Network, and switch to the Midnight Preview network. ` +
             `Original error: ${msg}`
           );
         }
@@ -83,7 +84,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
       const status = await connectedApi.getConnectionStatus();
       if (status.status !== 'connected') {
-        throw new Error(`Wallet status: ${status.status}. Make sure you are connected to the Midnight Preprod network.`);
+        throw new Error(`Wallet status: ${status.status}. Make sure you are connected to the Midnight Preview network.`);
       }
 
       const config = await connectedApi.getConfiguration();

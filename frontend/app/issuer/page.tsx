@@ -2,9 +2,9 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { useWallet } from '@/lib/wallet';
-import { deployKreditContract, findKreditContract } from '@/lib/providers';
+import { deployKreditContract, findKreditContract, stringifyError, updatePrivateState } from '@/lib/providers';
 
-const CONTRACT_ADDRESS_KEY = 'kredit-contract-address';
+const CONTRACT_ADDRESS_KEY = 'kredit-contract-address-preview';
 
 function getContractAddress(): string | null {
   if (typeof window === 'undefined') return null;
@@ -25,6 +25,7 @@ function toBytes32(input: string): Uint8Array {
 export default function IssuerPage() {
   const { isConnected, connectedApi } = useWallet();
   const [subjectAddress, setSubjectAddress] = useState('');
+  const [score, setScore] = useState('750');
   const [issuerId, setIssuerId] = useState('');
   const [contractAddr, setContractAddr] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
@@ -50,8 +51,8 @@ export default function IssuerPage() {
       setContractAddress(addr);
       setStatus(`Contract deployed at ${addr}`);
     } catch (err) {
-      console.error('Deploy error:', err);
-      setStatus(`Deploy error: ${err instanceof Error ? err.message : 'Unknown'}`);
+      console.error('Deploy error:', err, (err as any)?.cause, (err as any)?.finalizedTxData);
+      setStatus(`Deploy error: ${stringifyError(err)}`);
     } finally {
       setLoading(false);
     }
@@ -85,6 +86,8 @@ export default function IssuerPage() {
       if (!addr) throw new Error('No contract deployed. Click "Deploy Kredit Contract" above first.');
       const found = await findKreditContract(connectedApi, addr);
       const subjectBytes = toBytes32(subjectAddress.trim());
+      // The holder later proves with holderSecret, so bind it to this subject, and commit to the entered score.
+      updatePrivateState({ score: BigInt(parseInt(score, 10) || 0), holderSecretKey: subjectBytes });
       await (found.callTx as any).issueCredential(subjectBytes);
       setStatus(`Credential issued for ${subjectAddress.slice(0, 16)}... (commitment stored on-chain)`);
     } catch (err) {
@@ -93,7 +96,7 @@ export default function IssuerPage() {
     } finally {
       setLoading(false);
     }
-  }, [connectedApi, subjectAddress, contractAddr]);
+  }, [connectedApi, subjectAddress, score, contractAddr]);
 
   const handleRevoke = useCallback(async () => {
     if (!connectedApi || !subjectAddress.trim()) return;
@@ -179,6 +182,18 @@ export default function IssuerPage() {
                   value={subjectAddress}
                   onChange={(e) => setSubjectAddress(e.target.value)}
                   placeholder="Enter Midnight address..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Credit Score (kept private)
+                </label>
+                <input
+                  type="number"
+                  value={score}
+                  onChange={(e) => setScore(e.target.value)}
+                  placeholder="e.g., 750"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>

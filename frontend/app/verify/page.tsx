@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react';
 import { useWallet } from '@/lib/wallet';
 import { findKreditContract } from '@/lib/providers';
 
-const CONTRACT_ADDRESS_KEY = 'kredit-contract-address';
+const CONTRACT_ADDRESS_KEY = 'kredit-contract-address-preview';
 const CONTRACT_ADDRESS = '';
 
 export default function VerifyPage() {

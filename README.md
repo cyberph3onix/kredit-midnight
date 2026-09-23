@@ -2,12 +2,37 @@
 
 **Confidential Credential & Eligibility Protocol on Midnight Network**
 
+> Prove you qualify for a loan — without revealing your credit score.
+
 [![CI](https://github.com/rue19/kredit-midnight/actions/workflows/ci.yml/badge.svg)](https://github.com/rue19/kredit-midnight/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
+---
+
+## Live Demo & Video
+
 **Live Demo:** [https://kreditmidnight.vercel.app](https://kreditmidnight.vercel.app)
 
-> Prove you qualify for a loan — without revealing your credit score.
+**Walkthrough Video:**
+
+[![Kredit Protocol — Demo Walkthrough](https://img.youtube.com/vi/2OjA4wHDPjs/0.jpg)](https://youtu.be/2OjA4wHDPjs?si=FJw3Jwl3r_IaR0Dw)
+
+> Click the thumbnail above (or [watch on YouTube](https://youtu.be/2OjA4wHDPjs?si=FJw3Jwl3r_IaR0Dw)) for a full walkthrough: wallet setup, contract deployment, credential issuance, and a zero-knowledge eligibility proof.
+
+---
+
+## Deployed Contract
+
+| Field | Value |
+|---|---|
+| **Contract ID** | `b23fce4af53e403f27809f9a7e341c61fcb2ae011d2b61662641144c2f9c549d` |
+| **Network** | Midnight Preprod |
+| **Name** | `kredit` |
+| **Circuits** | `rotateAdmin`, `registerIssuer`, `unregisterIssuer`, `issueCredential`, `revokeCredential`, `proveEligibility`, `proveNotRevoked` |
+| **Runtime** | 0.16.0 |
+| **Contract Language** | Compact 0.23 |
+
+The contract is compiled from `contract/src/kredit.compact` and deployed on Midnight Preprod. The same contract ID is used by every page of the frontend (`issuer`, `user`, `verify`); the deployed address is remembered by the Issuer Console and reused by the User and Verifier views.
 
 ---
 
@@ -90,7 +115,7 @@ An issuer (e.g., a bank) issues a credential commitment on-chain. The user holds
 
 ## Contract Details
 
-### 7 Circuits
+### Circuit Surface
 
 | Circuit | Access | Description |
 |---|---|---|
@@ -206,6 +231,16 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
+## Screenshots
+
+![Home — Kredit Protocol landing with dithering shader](screenshots/home.png)
+
+![Issuer Console — Deploy contract, register issuers, issue/revoke credentials](screenshots/issuer.png)
+
+![Live demo — Kredit Protocol in action](screenshots/demo.png)
+
+---
+
 ## Folder Structure
 
 ```
@@ -243,6 +278,10 @@ kredit-midnight/
 │   ├── privacy-model.md
 │   ├── toolchain.md                    # Version source of truth
 │   └── proposal.md                     # Level 3 proposal
+├── screenshots/
+│   ├── home.png                        # Landing page
+│   ├── issuer.png                      # Issuer Console
+│   └── demo.png                        # Live demo capture
 ├── .github/workflows/ci.yml            # CI/CD pipeline
 ├── start-services.sh                   # Local dev startup script
 ├── .env.example
@@ -263,6 +302,7 @@ cp .env.example frontend/.env.local
 |---|---|---|
 | `PROOF_SERVER_URL` | `http://localhost:6300` | Midnight proof server URL |
 | `NEXT_PUBLIC_ZK_ARTIFACTS_URL` | _(empty = same origin)_ | Client-side ZK artifacts URL |
+| `CONTRACT_ADDRESS` | _(empty)_ | Deployed `kredit` contract ID (`b23fce4af53e403f27809f9a7e341c61fcb2ae011d2b61662641144c2f9c549d`) |
 
 ---
 

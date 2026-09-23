@@ -5,7 +5,7 @@ import { useWallet } from '@/lib/wallet';
 import { findKreditContract } from '@/lib/providers';
 import { loadPrivateState, generateInitialPrivateState, savePrivateState } from '@/lib/prover';
 
-const CONTRACT_ADDRESS_KEY = 'kredit-contract-address';
+const CONTRACT_ADDRESS_KEY = 'kredit-contract-address-preview';
 const CONTRACT_ADDRESS = '';
 
 export default function UserPage() {
@@ -17,6 +17,12 @@ export default function UserPage() {
   const [privateStateInfo, setPrivateStateInfo] = useState<string | null>(null);
 
   const handleGenerateKeys = useCallback(() => {
+    // Reuse existing keys: regenerating would replace the admin/issuer secrets and orphan the issued credential.
+    const existing = loadPrivateState();
+    if (existing) {
+      setPrivateStateInfo(`Local keys loaded. Score: ${existing.score} (stored locally only)`);
+      return;
+    }
     const state = generateInitialPrivateState();
     savePrivateState(state);
     setPrivateStateInfo(`Keys generated. Score: ${state.score} (stored locally only)`);
