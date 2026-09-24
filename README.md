@@ -9,19 +9,6 @@
 
 ---
 
-## Live Demo & Video
-
-**Live Demo:** [https://kredit-midnight-frontend-l6vbxxm1q-cyberph3onixs-projects.vercel.app](https://kredit-midnight-frontend-l6vbxxm1q-cyberph3onixs-projects.vercel.app)
-[![frontend](image.png)](https://kredit-midnight-frontend-l6vbxxm1q-cyberph3onixs-projects.vercel.app)
-
-**Walkthrough Video:**
-
-[![Kredit Protocol — Demo Walkthrough](https://img.youtube.com/vi/u_vi6gyc3AA/0.jpg)](https://youtu.be/u_vi6gyc3AA)
-
-> Click the thumbnail above (or [watch on YouTube](https://youtu.be/u_vi6gyc3AA)) for a full walkthrough: wallet setup, contract deployment, credential issuance, and a zero-knowledge eligibility proof.
-
----
-
 ## Deployed Contract
 
 | Field | Value |
@@ -34,6 +21,19 @@
 | **Contract Language** | Compact 0.23 |
 
 The contract is compiled from `contract/src/kredit.compact` and deployed on Midnight Preprod. The same contract ID is used by every page of the frontend (`issuer`, `user`, `verify`); the deployed address is remembered by the Issuer Console and reused by the User and Verifier views.
+
+---
+
+## Live Demo & Video
+
+**Live Demo:** [https://kredit-midnight-frontend-l6vbxxm1q-cyberph3onixs-projects.vercel.app](https://kredit-midnight-frontend-l6vbxxm1q-cyberph3onixs-projects.vercel.app)
+[![frontend](image.png)](https://kredit-midnight-frontend-l6vbxxm1q-cyberph3onixs-projects.vercel.app)
+
+**Walkthrough Video:**
+
+[![Kredit Protocol — Demo Walkthrough](https://img.youtube.com/vi/u_vi6gyc3AA/0.jpg)](https://youtu.be/u_vi6gyc3AA)
+
+> Click the thumbnail above (or [watch on YouTube](https://youtu.be/u_vi6gyc3AA)) for a full walkthrough: wallet setup, contract deployment, credential issuance, and a zero-knowledge eligibility proof.
 
 ---
 
@@ -229,16 +229,6 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 | 13 | Privacy: ledger state does not contain score or salt | Privacy |
 | 14 | Admin rotation prevents old admin from registering issuers | Admin |
 | 15 | ProveNotRevoked returns true for non-revoked credential | Revocation |
-
----
-
-## Screenshots
-
-![Home — Kredit Protocol landing with dithering shader](screenshots/home.png)
-
-![Issuer Console — Deploy contract, register issuers, issue/revoke credentials](screenshots/issuer.png)
-
-![Live demo — Kredit Protocol in action](screenshots/demo.png)
 
 ---
 
