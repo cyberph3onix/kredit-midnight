@@ -78,6 +78,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
             `Original error: ${msg}`
           );
         }
+        if (msg.includes('was shutdown') || msg.includes('no longer be used')) {
+          throw new Error(
+            'The wallet extension\'s connection went stale (its background service worker was ' +
+            'suspended by the browser). Reload this page and try connecting again — no other fix ' +
+            'is needed.'
+          );
+        }
         throw new Error(`Wallet connection failed: ${msg}`);
       }
 

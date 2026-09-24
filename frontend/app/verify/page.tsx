@@ -6,18 +6,17 @@ import { findKreditContract, type KreditContractHandle } from '@/lib/providers';
 import { Panel, Field, TextInput, Button, Banner, GateNotice } from '@/components/ui/console';
 
 const CONTRACT_ADDRESS_KEY = 'kredit-contract-address';
-const CONTRACT_ADDRESS = '';
+const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ?? '';
 
 export default function VerifyPage() {
   const { isConnected, connectedApi } = useWallet();
-  const [address, setAddress] = useState('');
   const [threshold, setThreshold] = useState('');
   const [result, setResult] = useState<{ eligible: boolean; revoked: boolean } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleVerify = useCallback(async () => {
-    if (!address.trim() || !threshold.trim() || !connectedApi) return;
+    if (!threshold.trim() || !connectedApi) return;
     setLoading(true);
     setError(null);
     setResult(null);
@@ -45,7 +44,7 @@ export default function VerifyPage() {
     } finally {
       setLoading(false);
     }
-  }, [address, threshold, connectedApi]);
+  }, [threshold, connectedApi]);
 
   const passed = result && result.eligible && !result.revoked;
 
@@ -56,9 +55,9 @@ export default function VerifyPage() {
         Check the claim, not the score
       </h1>
       <p className="text-dim mb-10 max-w-lg leading-relaxed">
-        Enter a holder&apos;s address and a threshold. You&apos;ll learn pass
-        or fail and whether the credential is still valid — never the number
-        behind it.
+        Connect the holder&apos;s wallet and enter a threshold. You&apos;ll
+        learn pass or fail and whether the credential is still valid — never
+        the number behind it.
       </p>
 
       {!isConnected ? (
@@ -67,13 +66,6 @@ export default function VerifyPage() {
         <div className="space-y-4">
           <Panel title="Verify" index="01">
             <div className="space-y-4">
-              <Field label="holder address">
-                <TextInput
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  placeholder="mn_addr…"
-                />
-              </Field>
               <Field label="threshold">
                 <TextInput
                   type="number"
@@ -84,7 +76,7 @@ export default function VerifyPage() {
               </Field>
               <Button
                 onClick={handleVerify}
-                disabled={loading || !address.trim() || !threshold.trim()}
+                disabled={loading || !threshold.trim()}
               >
                 {loading ? 'Verifying…' : 'Verify eligibility'}
               </Button>

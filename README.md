@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 **Live Demo:** [https://kreditmidnight.vercel.app](https://kreditmidnight.vercel.app)
-
+![frontend](image.png)
 > Prove you qualify for a loan — without revealing your credit score.
 
 ---
@@ -262,6 +262,7 @@ cp .env.example frontend/.env.local
 | Variable | Default | Description |
 |---|---|---|
 | `NEXT_PUBLIC_ZK_ARTIFACTS_URL` | _(empty = same origin)_ | Client-side ZK artifacts URL (served from `frontend/public`) |
+| `NEXT_PUBLIC_CONTRACT_ADDRESS` | _(empty)_ | Address of the Kredit contract already deployed on Preprod. Without this set, a visitor who hasn't personally deployed a contract from the Issuer console (which stores the address in their own browser's `localStorage`) will see "No contract deployed" on the Verify/User pages. Deploy once via the Issuer console, copy the resulting address, and set this variable (locally in `.env.local`, and in Vercel's project settings for the live demo). |
 
 ---
 
@@ -284,8 +285,17 @@ GitHub Actions runs on every push/PR to `main`:
 - Install the Lace wallet Chrome extension (Midnight Preprod build)
 - Enable **Developer Mode** in Lace wallet settings
 
+### Connect wallet button (or anything else) does nothing when opened via a LAN address
+- Next.js 16's dev server blocks cross-origin requests to dev-only assets (JS chunks, HMR) unless the origin is explicitly trusted. Running with `--hostname 0.0.0.0` does **not** by itself allow browsing from `http://<lan-ip>:3000` — the page never finishes hydrating, so no click handlers work at all, not just Connect wallet
+- Fixed by `allowedDevOrigins` in `frontend/next.config.ts` (already covers common home LAN ranges; add your own subnet there if it's not `192.168.0.x`/`192.168.1.x`/`10.0.0.x`)
+- After changing `next.config.ts`, restart the dev server
+
 ### "Network mismatch"
 - Open Lace wallet → Settings → Network → Switch to **Midnight Preprod**
+
+### "Remote API ... was shutdown: object can no longer be used"
+- Chrome suspended the Lace extension's background service worker (Manifest V3 behavior after inactivity), which killed the page's connection channel to it
+- **Reload the page** and connect again — this is a browser/extension quirk, not an app bug, and a fresh page load gets a live channel
 
 ### "shielded coin public key is not available"
 - The wallet needs shielded keys initialized

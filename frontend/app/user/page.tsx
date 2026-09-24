@@ -7,7 +7,7 @@ import { generateInitialPrivateState, savePrivateState } from '@/lib/prover';
 import { Panel, Field, TextInput, Button, Banner, GateNotice } from '@/components/ui/console';
 
 const CONTRACT_ADDRESS_KEY = 'kredit-contract-address';
-const CONTRACT_ADDRESS = '';
+const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ?? '';
 
 export default function UserPage() {
   const { isConnected, connectedApi } = useWallet();
