@@ -1,16 +1,18 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Manrope, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { WalletProvider } from "@/lib/wallet";
 import ConnectWalletButton from "@/components/ConnectWalletButton";
+import { AmbientNetwork } from "@/components/ui/ambient-network";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const manrope = Manrope({
+  variable: "--font-manrope",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const plexMono = IBM_Plex_Mono({
+  variable: "--font-plex-mono",
+  weight: ["400", "500"],
   subsets: ["latin"],
 });
 
@@ -27,14 +29,21 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${manrope.variable} ${plexMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col relative">
+        <AmbientNetwork />
         <WalletProvider>
           <ConnectWalletButton />
-          <main className="container mx-auto px-4 py-8 flex-1">
+          <main className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-16 flex-1 w-full">
             {children}
           </main>
+          <footer className="relative z-10 border-t border-line">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex items-center justify-between text-xs text-dimmer font-mono">
+              <span>Midnight Preprod</span>
+              <span>Compact 0.23</span>
+            </div>
+          </footer>
         </WalletProvider>
       </body>
     </html>
