@@ -11,8 +11,8 @@
 
 ## Live Demo & Video
 
-**Live Demo:** [https://kreditmidnight.vercel.app](https://kreditmidnight.vercel.app)
-[![frontend](image.png)](https://kreditmidnight.vercel.app)
+**Live Demo:** [https://kredit-midnight-frontend-l6vbxxm1q-cyberph3onixs-projects.vercel.app](https://kredit-midnight-frontend-l6vbxxm1q-cyberph3onixs-projects.vercel.app)
+[![frontend](image.png)](https://kredit-midnight-frontend-l6vbxxm1q-cyberph3onixs-projects.vercel.app)
 
 **Walkthrough Video:**
 
