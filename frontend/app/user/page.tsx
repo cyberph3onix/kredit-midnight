@@ -2,11 +2,12 @@
 
 import { useState, useCallback } from 'react';
 import { useWallet } from '@/lib/wallet';
-import { findKreditContract } from '@/lib/providers';
+import { findKreditContract, type KreditContractHandle } from '@/lib/providers';
 import { loadPrivateState, generateInitialPrivateState, savePrivateState } from '@/lib/prover';
+import { Panel, Field, TextInput, Button, Banner, GateNotice } from '@/components/ui/console';
 
-const CONTRACT_ADDRESS_KEY = 'kredit-contract-address-preview';
-const CONTRACT_ADDRESS = '';
+const CONTRACT_ADDRESS_KEY = 'kredit-contract-address';
+const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ?? '';
 
 export default function UserPage() {
   const { isConnected, connectedApi } = useWallet();
@@ -25,17 +26,17 @@ export default function UserPage() {
     }
     const state = generateInitialPrivateState();
     savePrivateState(state);
-    setPrivateStateInfo(`Keys generated. Score: ${state.score} (stored locally only)`);
+    setPrivateStateInfo(`Keys generated. Score: ${state.score} — stored locally only`);
   }, []);
 
   const handleProve = useCallback(async () => {
     const t = parseInt(threshold, 10);
     if (isNaN(t) || t < 0) {
-      setError('Please enter a valid threshold');
+      setError('Enter a valid threshold');
       return;
     }
     if (!connectedApi) {
-      setError('Please connect your wallet first');
+      setError('Connect your wallet first');
       return;
     }
 
@@ -50,7 +51,8 @@ export default function UserPage() {
       }
 
       const found = await findKreditContract(connectedApi, contractAddr);
-      const eligible = await (found.callTx as any).proveEligibility(BigInt(t));
+      const { callTx } = found as unknown as KreditContractHandle;
+      const eligible = await callTx.proveEligibility(BigInt(t));
       setResult({ eligible: Boolean(eligible), threshold: t });
     } catch (err) {
       console.error('Prove error:', err);
@@ -61,90 +63,80 @@ export default function UserPage() {
   }, [threshold, connectedApi]);
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">User View</h1>
+    <div className="max-w-2xl">
+      <p className="font-mono text-xs text-dim mb-3">holder</p>
+      <h1 className="text-3xl font-medium tracking-tight mb-3">
+        Prove eligibility, keep the number
+      </h1>
+      <p className="text-dim mb-10 max-w-lg leading-relaxed">
+        Your score and salt live only in this browser. A proof crosses the
+        privacy boundary as a single boolean — the value behind it never does.
+      </p>
+
       {!isConnected ? (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <p className="text-yellow-800">Please connect your wallet to generate a proof.</p>
-        </div>
+        <GateNotice>Connect your wallet to generate a proof.</GateNotice>
       ) : (
-        <div className="space-y-6">
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">Your Keys</h2>
-            <p className="text-sm text-gray-600 mb-4">
-              Generate a local keypair and score. These are stored only in your browser — never transmitted.
+        <div className="space-y-4">
+          <Panel title="Local keys" index="01">
+            <p className="text-sm text-dim mb-4 leading-relaxed">
+              Generate a keypair and score. They stay in this browser and are
+              never transmitted.
             </p>
             {privateStateInfo ? (
-              <div className="bg-green-50 border border-green-200 rounded p-3">
-                <p className="text-green-800 text-sm">{privateStateInfo}</p>
-              </div>
+              <Banner tone="pass">{privateStateInfo}</Banner>
             ) : (
-              <button
-                onClick={handleGenerateKeys}
-                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-              >
-                Generate Local Keys
-              </button>
+              <Button variant="outline" onClick={handleGenerateKeys}>
+                Generate local keys
+              </Button>
             )}
-          </div>
+          </Panel>
 
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">Generate Eligibility Proof</h2>
-            <p className="text-sm text-gray-600 mb-4">
-              Your private score and salt are stored locally in your browser.
-              They are never transmitted in plaintext. Only the boolean result of the proof crosses the privacy boundary.
-            </p>
+          <Panel title="Eligibility proof" index="02">
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Threshold to check against
-                </label>
-                <input
+              <Field
+                label="threshold"
+                hint={`The verifier will learn only whether your score ≥ ${threshold || '?'}`}
+              >
+                <TextInput
                   type="number"
                   value={threshold}
                   onChange={(e) => setThreshold(e.target.value)}
-                  placeholder="e.g., 700"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="700"
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  The verifier will only learn whether your score &gt;= {threshold || '?'}
-                </p>
-              </div>
-              <button
-                onClick={handleProve}
-                disabled={loading || !threshold}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
-              >
-                {loading ? 'Generating proof...' : 'Generate Proof'}
-              </button>
+              </Field>
+              <Button onClick={handleProve} disabled={loading || !threshold}>
+                {loading ? 'Generating proof…' : 'Generate proof'}
+              </Button>
             </div>
-          </div>
+          </Panel>
 
           {result && (
-            <div className={`border rounded-lg p-6 ${result.eligible ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
-              <h3 className="text-lg font-semibold mb-2">
-                {result.eligible ? 'ELIGIBLE' : 'NOT ELIGIBLE'}
+            <div
+              className={`border rounded-[2px] p-6 ${
+                result.eligible ? 'border-pass/30 bg-pass/5' : 'border-fail/30 bg-fail/5'
+              }`}
+            >
+              <h3
+                className={`font-mono text-sm mb-2 ${result.eligible ? 'text-pass' : 'text-fail'}`}
+              >
+                {result.eligible ? 'eligible' : 'not eligible'}
               </h3>
-              <p className="text-sm text-gray-700">
-                Your score &gt;= {result.threshold} was proven on-chain.
-                Your actual score was never disclosed.
+              <p className="text-sm text-dim leading-relaxed">
+                score &ge; {result.threshold} was proven on-chain. Your actual
+                score was never disclosed.
               </p>
             </div>
           )}
 
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-800 text-sm">{error}</p>
-            </div>
-          )}
+          {error && <Banner tone="fail">{error}</Banner>}
 
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-            <h3 className="font-semibold mb-2">Privacy Guarantee</h3>
-            <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside">
-              <li>Your score is never sent over the network</li>
-              <li>Only the boolean result (eligible/not eligible) appears on-chain</li>
-              <li>The salt used in the commitment is never revealed</li>
-              <li>The proof server processes data locally — private inputs never leave your machine</li>
+          <div className="border border-line rounded-[2px] p-5 mt-8">
+            <h3 className="text-sm font-medium mb-3">What stays local</h3>
+            <ul className="text-sm text-dim space-y-1.5">
+              <li>Your score is never sent over the network.</li>
+              <li>Only the boolean result — eligible or not — reaches the chain.</li>
+              <li>The commitment salt is never revealed.</li>
+              <li>Proof generation runs locally; private inputs never leave this machine.</li>
             </ul>
           </div>
         </div>

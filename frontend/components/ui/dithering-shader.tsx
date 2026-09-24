@@ -329,11 +329,13 @@ export function DitheringShader({
   const programRef = useRef<WebGLProgram | null>(null)
   const glRef = useRef<WebGL2RenderingContext | null>(null)
   const uniformLocationsRef = useRef<Record<string, WebGLUniformLocation | null>>({})
-  const startTimeRef = useRef<number>(Date.now())
+  const startTimeRef = useRef<number>(0)
 
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
+
+    startTimeRef.current = Date.now()
 
     const gl = canvas.getContext("webgl2")
     if (!gl) {

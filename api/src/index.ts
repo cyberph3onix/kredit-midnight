@@ -1,18 +1,31 @@
-export interface KreditProviders {
-  zkConfigProvider: any;
-  proofProvider: any;
-  publicDataProvider: any;
-  walletProvider: any;
-  midnightProvider: any;
-  privateStateProvider: any;
-}
+import type {
+  MidnightProvider,
+  PrivateStateProvider,
+  ProofProvider,
+  PublicDataProvider,
+  WalletProvider,
+  ZKConfigProvider,
+} from '@midnight-ntwrk/midnight-js-types';
+import type { KreditPrivateState } from 'kredit-contract';
 
-export type KreditPrivateState = {
-  adminSecretKey: Uint8Array;
-  issuerSecretKey: Uint8Array;
-  holderSecretKey: Uint8Array;
-  score: bigint;
-  salt: Uint8Array;
+export type { KreditPrivateState } from 'kredit-contract';
+
+export type KreditCircuitName =
+  | 'rotateAdmin'
+  | 'registerIssuer'
+  | 'unregisterIssuer'
+  | 'issueCredential'
+  | 'revokeCredential'
+  | 'proveEligibility'
+  | 'proveNotRevoked';
+
+export type KreditProviders = {
+  zkConfigProvider: ZKConfigProvider<KreditCircuitName>;
+  proofProvider: ProofProvider;
+  publicDataProvider: PublicDataProvider;
+  walletProvider: WalletProvider;
+  midnightProvider: MidnightProvider;
+  privateStateProvider: PrivateStateProvider<string, KreditPrivateState>;
 };
 
 export type NetworkId = 'preprod' | 'preview' | 'undeployed';

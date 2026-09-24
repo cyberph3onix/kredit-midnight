@@ -2,9 +2,16 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { useWallet } from '@/lib/wallet';
-import { deployKreditContract, findKreditContract, stringifyError, updatePrivateState } from '@/lib/providers';
+import {
+  deployKreditContract,
+  findKreditContract,
+  stringifyError,
+  updatePrivateState,
+  type KreditContractHandle,
+} from '@/lib/providers';
+import { Panel, Field, TextInput, Button, Banner, GateNotice } from '@/components/ui/console';
 
-const CONTRACT_ADDRESS_KEY = 'kredit-contract-address-preview';
+const CONTRACT_ADDRESS_KEY = 'kredit-contract-address';
 
 function getContractAddress(): string | null {
   if (typeof window === 'undefined') return null;
@@ -33,25 +40,28 @@ export default function IssuerPage() {
 
   useEffect(() => {
     const saved = getContractAddress();
+    // localStorage cannot be read during render without risking a hydration mismatch
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (saved) setContractAddr(saved);
   }, []);
 
   const handleDeploy = useCallback(async () => {
     if (!connectedApi) return;
     setLoading(true);
-    setStatus('Deploying contract... (this may take a minute for proof generation)');
+    setStatus('Deploying contract… this can take a minute for proof generation.');
     try {
       const raw = new TextEncoder().encode('kredit-admin-001');
       const adminId = new Uint8Array(32);
       adminId.set(raw);
-      const deployed = await deployKreditContract(connectedApi, adminId, null);
+      const deployed = await deployKreditContract(connectedApi, adminId);
 
       const addr = deployed.contractAddress ?? 'unknown';
       setContractAddr(addr);
       setContractAddress(addr);
       setStatus(`Contract deployed at ${addr}`);
     } catch (err) {
-      console.error('Deploy error:', err, (err as any)?.cause, (err as any)?.finalizedTxData);
+      const deployErr = err as Error & { cause?: unknown; finalizedTxData?: unknown };
+      console.error('Deploy error:', deployErr, deployErr.cause, deployErr.finalizedTxData);
       setStatus(`Deploy error: ${stringifyError(err)}`);
     } finally {
       setLoading(false);
@@ -61,13 +71,14 @@ export default function IssuerPage() {
   const handleRegisterIssuer = useCallback(async () => {
     if (!connectedApi || !issuerId.trim()) return;
     setLoading(true);
-    setStatus('Registering issuer...');
+    setStatus('Registering issuer…');
     try {
       const addr = contractAddr ?? getContractAddress();
-      if (!addr) throw new Error('No contract deployed. Click "Deploy Kredit Contract" above first.');
+      if (!addr) throw new Error('No contract deployed. Deploy the Kredit contract above first.');
       const found = await findKreditContract(connectedApi, addr);
+      const { callTx } = found as unknown as KreditContractHandle;
       const issuerIdBytes = toBytes32(issuerId.trim());
-      await (found.callTx as any).registerIssuer(issuerIdBytes);
+      await callTx.registerIssuer(issuerIdBytes);
       setStatus(`Issuer "${issuerId}" registered on-chain`);
     } catch (err) {
       console.error('Register issuer error:', err);
@@ -80,16 +91,17 @@ export default function IssuerPage() {
   const handleIssue = useCallback(async () => {
     if (!connectedApi || !subjectAddress.trim()) return;
     setLoading(true);
-    setStatus('Issuing credential...');
+    setStatus('Issuing credential…');
     try {
       const addr = contractAddr ?? getContractAddress();
-      if (!addr) throw new Error('No contract deployed. Click "Deploy Kredit Contract" above first.');
+      if (!addr) throw new Error('No contract deployed. Deploy the Kredit contract above first.');
       const found = await findKreditContract(connectedApi, addr);
+      const { callTx } = found as unknown as KreditContractHandle;
       const subjectBytes = toBytes32(subjectAddress.trim());
       // The holder later proves with holderSecret, so bind it to this subject, and commit to the entered score.
       updatePrivateState({ score: BigInt(parseInt(score, 10) || 0), holderSecretKey: subjectBytes });
-      await (found.callTx as any).issueCredential(subjectBytes);
-      setStatus(`Credential issued for ${subjectAddress.slice(0, 16)}... (commitment stored on-chain)`);
+      await callTx.issueCredential(subjectBytes);
+      setStatus(`Credential issued for ${subjectAddress.slice(0, 16)}… commitment stored on-chain`);
     } catch (err) {
       console.error('Issue credential error:', err);
       setStatus(`Error: ${err instanceof Error ? err.message : 'Unknown'}`);
@@ -101,14 +113,15 @@ export default function IssuerPage() {
   const handleRevoke = useCallback(async () => {
     if (!connectedApi || !subjectAddress.trim()) return;
     setLoading(true);
-    setStatus('Revoking credential...');
+    setStatus('Revoking credential…');
     try {
       const addr = contractAddr ?? getContractAddress();
-      if (!addr) throw new Error('No contract deployed. Click "Deploy Kredit Contract" above first.');
+      if (!addr) throw new Error('No contract deployed. Deploy the Kredit contract above first.');
       const found = await findKreditContract(connectedApi, addr);
+      const { callTx } = found as unknown as KreditContractHandle;
       const subjectBytes = toBytes32(subjectAddress.trim());
-      await (found.callTx as any).revokeCredential(subjectBytes);
-      setStatus(`Credential revoked for ${subjectAddress.slice(0, 16)}...`);
+      await callTx.revokeCredential(subjectBytes);
+      setStatus(`Credential revoked for ${subjectAddress.slice(0, 16)}…`);
     } catch (err) {
       console.error('Revoke credential error:', err);
       setStatus(`Error: ${err instanceof Error ? err.message : 'Unknown'}`);
@@ -117,119 +130,99 @@ export default function IssuerPage() {
     }
   }, [connectedApi, subjectAddress, contractAddr]);
 
+  const isError = status?.toLowerCase().includes('error');
+
   return (
-    <div className="max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Issuer Console</h1>
+    <div className="max-w-2xl">
+      <p className="font-mono text-xs text-dim mb-3">issuer console</p>
+      <h1 className="text-3xl font-medium tracking-tight mb-3">
+        Commit credentials without the score
+      </h1>
+      <p className="text-dim mb-10 max-w-lg leading-relaxed">
+        As admin you deploy the contract and register trusted issuers. As an
+        issuer, you commit a subject&apos;s score on-chain — the number itself
+        stays with you, off-chain.
+      </p>
+
       {!isConnected ? (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <p className="text-yellow-800">Please connect your wallet as an admin/issuer to continue.</p>
-        </div>
+        <GateNotice>Connect a wallet with admin or issuer rights to continue.</GateNotice>
       ) : (
-        <div className="space-y-6">
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">Contract Setup</h2>
+        <div className="space-y-4">
+          <Panel title="Contract" index="01">
             {contractAddr ? (
-              <div className="bg-green-50 border border-green-200 rounded p-3 mb-4">
-                <p className="text-green-800 text-sm font-mono break-all">
-                  Contract: {contractAddr}
-                </p>
+              <div className="border border-line rounded-[2px] p-3 mb-5">
+                <p className="text-xs text-dim mb-1">Deployed at</p>
+                <p className="font-mono text-sm break-all text-paper">{contractAddr}</p>
               </div>
             ) : (
-              <button
-                onClick={handleDeploy}
-                disabled={loading}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors mb-4"
-              >
-                Deploy Kredit Contract
-              </button>
+              <Button onClick={handleDeploy} disabled={loading} className="mb-5">
+                Deploy Kredit contract
+              </Button>
             )}
 
-            <div className="space-y-4 mt-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Issuer ID
-                </label>
-                <input
-                  type="text"
+            <div className="space-y-4">
+              <Field label="issuer id" hint="e.g. bank-acme-001">
+                <TextInput
                   value={issuerId}
                   onChange={(e) => setIssuerId(e.target.value)}
-                  placeholder="e.g., bank-acme-001"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="bank-acme-001"
                 />
-              </div>
-              <button
+              </Field>
+              <Button
+                variant="outline"
                 onClick={handleRegisterIssuer}
                 disabled={loading || !issuerId.trim() || !contractAddr}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
               >
-                Register Issuer
-              </button>
+                Register issuer
+              </Button>
             </div>
-          </div>
+          </Panel>
 
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">Issue Credential</h2>
-            <p className="text-sm text-gray-600 mb-4">
-              Enter the subject&apos;s address to issue a credential. The raw score and salt are kept private — only the commitment hash is stored on-chain.
-            </p>
+          <Panel title="Credential" index="02">
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Subject Address
-                </label>
-                <input
-                  type="text"
+<Field label="subject address" hint="The raw score and salt never touch the chain — only their commitment does.">
+                <TextInput
                   value={subjectAddress}
                   onChange={(e) => setSubjectAddress(e.target.value)}
-                  placeholder="Enter Midnight address..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="mn_addr…"
                 />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Credit Score (kept private)
-                </label>
-                <input
+              </Field>
+              <Field label="credit score" hint="Committed on-chain; the number itself stays off-chain.">
+                <TextInput
                   type="number"
                   value={score}
                   onChange={(e) => setScore(e.target.value)}
-                  placeholder="e.g., 750"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="e.g. 750"
                 />
-              </div>
-              <div className="flex gap-3">
-                <button
+              </Field>
+              <div className="flex flex-wrap gap-3">
+                <Button
                   onClick={handleIssue}
                   disabled={loading || !subjectAddress.trim() || !contractAddr}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
                 >
-                  Issue Credential
-                </button>
-                <button
+                  Issue credential
+                </Button>
+                <Button
+                  variant="danger"
                   onClick={handleRevoke}
                   disabled={loading || !subjectAddress.trim() || !contractAddr}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
                 >
-                  Revoke Credential
-                </button>
+                  Revoke credential
+                </Button>
               </div>
             </div>
-          </div>
+          </Panel>
 
-          {status && (
-            <div className={`border rounded-lg p-4 ${status.includes('error') || status.includes('Error') ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-200'}`}>
-              <p className={`text-sm ${status.includes('error') || status.includes('Error') ? 'text-red-800' : 'text-blue-800'}`}>{status}</p>
-            </div>
-          )}
+          {status && <Banner tone={isError ? 'fail' : 'info'}>{status}</Banner>}
 
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-            <h3 className="font-semibold mb-2">How it works</h3>
-            <ol className="text-sm text-gray-600 space-y-1 list-decimal list-inside">
-              <li>Deploy the Kredit contract (you become admin)</li>
-              <li>Register issuer identities</li>
-              <li>Issue credentials — commitment = persistentCommit(score, salt) stored on-chain</li>
-              <li>Subject receives raw data via secure channel (never touches chain)</li>
-              <li>Subject generates ZK proof to prove eligibility without revealing score</li>
+          <div className="border border-line rounded-[2px] p-5 mt-8">
+            <h3 className="text-sm font-medium mb-3">Sequence</h3>
+            <ol className="text-sm text-dim space-y-1.5">
+              <li>1. Deploy the contract — you become admin.</li>
+              <li>2. Register issuer identities.</li>
+              <li>3. Issue: commitment = persistentCommit(score, salt), stored on-chain.</li>
+              <li>4. The subject receives the raw score through a channel off this protocol.</li>
+              <li>5. The subject proves eligibility later, without revealing the score.</li>
             </ol>
           </div>
         </div>

@@ -18,7 +18,7 @@ Total runtime: 60 seconds. Shot-by-shot breakdown below.
 **On screen:** The view switches to the Issuer Console tab. The user clicks "Deploy New Credential Contract." A loading spinner appears. After a moment, a success toast notification shows the contract address and a green checkmark. The contract details populate a table row below.
 
 **Narration:**
-"From the Issuer Console, deploy a credential contract to the Cardano testnet. Instant deployment, confirmed on-chain."
+"From the Issuer Console, deploy a credential contract to the Midnight Preprod testnet. Instant deployment, confirmed on-chain."
 
 ---
 
@@ -42,7 +42,7 @@ Total runtime: 60 seconds. Shot-by-shot breakdown below.
 
 ## Shot 5 — Switch to User View — Generate Local Keys (0:25–0:30)
 
-**On screen:** The user clicks "User View" in the navigation bar. A welcome screen appears with a "Generate Wallet Keys" button. They click it. A new Cardano address and private key are generated locally and displayed (private key blurred or shown as masked). The user saves or copies the address.
+**On screen:** The user clicks "User View" in the navigation bar. A welcome screen appears with a "Generate Wallet Keys" button. They click it. A new Midnight address and private key are generated locally and displayed (private key blurred or shown as masked). The user saves or copies the address.
 
 **Narration:**
 "Switch to User View. Generate local keys — no private key ever leaves your device."
@@ -87,10 +87,10 @@ Total runtime: 60 seconds. Shot-by-shot breakdown below.
 
 ## Shot 10 — Flash the Terminal Showing 15 Passing Tests (0:55–1:00)
 
-**On screen:** Quick cut to a terminal window. `cargo test` output scrolls rapidly. Fifteen green "ok" lines flash by. The final line reads: "15 passed; 0 failed; 0 ignored." The screen fades to the Kredit Protocol logo and tagline: "Privacy-first credential verification on Cardano."
+**On screen:** Quick cut to a terminal window. `npx vitest run` output scrolls rapidly. Fifteen green "ok" lines flash by. The final line reads: "15 passed; 0 failed; 0 ignored." The screen fades to the Kredit Protocol logo and tagline: "Privacy-first credential verification on Midnight."
 
 **Narration:**
-"Fifteen tests. Fifteen passing. Kredit Protocol — privacy-first credential verification on Cardano."
+"Fifteen tests. Fifteen passing. Kredit Protocol — privacy-first credential verification on Midnight."
 
 ---
 
