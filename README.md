@@ -16,9 +16,9 @@
 
 **Walkthrough Video:**
 
-[![Kredit Protocol — Demo Walkthrough](https://img.youtube.com/vi/2OjA4wHDPjs/0.jpg)](https://youtu.be/2OjA4wHDPjs?si=FJw3Jwl3r_IaR0Dw)
+[![Kredit Protocol — Demo Walkthrough](https://img.youtube.com/vi/u_vi6gyc3AA/0.jpg)](https://youtu.be/u_vi6gyc3AA)
 
-> Click the thumbnail above (or [watch on YouTube](https://youtu.be/2OjA4wHDPjs?si=FJw3Jwl3r_IaR0Dw)) for a full walkthrough: wallet setup, contract deployment, credential issuance, and a zero-knowledge eligibility proof.
+> Click the thumbnail above (or [watch on YouTube](https://youtu.be/u_vi6gyc3AA)) for a full walkthrough: wallet setup, contract deployment, credential issuance, and a zero-knowledge eligibility proof.
 
 ---
 
@@ -26,7 +26,7 @@
 
 | Field | Value |
 |---|---|
-| **Contract ID** | `b23fce4af53e403f27809f9a7e341c61fcb2ae011d2b61662641144c2f9c549d` |
+| **Contract ID** | `d7016be782218a515837a816c7e993131a8cc4272ea7ad05d061d4b2b6e39bed` |
 | **Network** | Midnight Preprod |
 | **Name** | `kredit` |
 | **Circuits** | `rotateAdmin`, `registerIssuer`, `unregisterIssuer`, `issueCredential`, `revokeCredential`, `proveEligibility`, `proveNotRevoked` |
