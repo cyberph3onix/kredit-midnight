@@ -104,9 +104,12 @@ async function loadModules(): Promise<LoadedModules> {
   return _modules;
 }
 
+// FetchZkConfigProvider does `new URL(baseURL)` with no base argument, so an
+// empty string throws "Failed to construct 'URL': Invalid URL" instead of
+// resolving same-origin. Fall back to window.location.origin explicitly.
 const ZK_ARTIFACTS_BASE_URL =
   typeof window !== 'undefined'
-    ? (process.env.NEXT_PUBLIC_ZK_ARTIFACTS_URL ?? '')
+    ? (process.env.NEXT_PUBLIC_ZK_ARTIFACTS_URL || window.location.origin)
     : '';
 
 const PROOF_SERVER_URL = process.env.PROOF_SERVER_URL ?? 'http://localhost:6300';

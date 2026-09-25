@@ -31,11 +31,9 @@ indexer is open — anyone can confirm the contract exists on-chain without
 trusting this README:
 
 ```bash
-ADDR=d7016be782218a515837a816c7e993131a8cc4272ea7ad05d061d4b2b6e39bed
-
 curl -s -X POST https://indexer.preprod.midnight.network/api/v4/graphql \
   -H 'Content-Type: application/json' \
-  -d "{\"query\":\"query V(\$a:HexEncoded!){contractAction(address:\$a){... on ContractDeploy{state transaction{id hash block{height timestamp}}}}}\",\"variables\":{\"a\":\"$ADDR\"}}"
+  -d '{"query":"query V($a:HexEncoded!){contractAction(address:$a){... on ContractDeploy{state transaction{id hash block{height timestamp}}}}}","variables":{"a":"d7016be782218a515837a816c7e993131a8cc4272ea7ad05d061d4b2b6e39bed"}}'
 ```
 
 This returns the deploy transaction and the contract's on-chain state. All
