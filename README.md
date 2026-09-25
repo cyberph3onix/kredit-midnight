@@ -19,8 +19,8 @@
 | **Circuits** | `rotateAdmin`, `registerIssuer`, `unregisterIssuer`, `issueCredential`, `revokeCredential`, `proveEligibility`, `proveNotRevoked` |
 | **Runtime** | 0.16.0 |
 | **Contract Language** | Compact 0.23 |
-| **Deploy transaction** | [`ec1e9bc5…d214a`](https://indexer.preprod.midnight.network/api/v4/graphql) (id `624845`) |
-| **Deploy block** | `2692270` — `5845bc22…54a393` — 2026-09-24 17:34:54 UTC |
+| **Deploy transaction** | id `624845` — hash `ec1e9bc5388bd187638f69c09d01106a7dd4df9349c6be8e7eba372bc85d214a` |
+| **Deploy block** | `2692270` — `5845bc22175868999776d3833b25e8c857a248af676d336b066b2c241454a393` — 2026-09-24 17:34:54 UTC |
 
 The contract is compiled from `contract/src/kredit.compact` and deployed on Midnight Preprod. The same contract ID is used by every page of the frontend (`issuer`, `user`, `verify`); the deployed address is remembered by the Issuer Console and reused by the User and Verifier views.
 
