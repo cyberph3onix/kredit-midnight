@@ -1,14 +1,29 @@
 
 > kredit-midnight@0.1.0 test
-> cd contract && npx vitest run
+> cd contract && npx vitest run --reporter=verbose
 
 
- RUN  v3.2.7 /home/shrinjali/Desktop/kredit/contract
+ RUN  v5.0.1 <repo>/contract
 
- ✓ test/kredit.test.ts (15 tests) 335ms
+Sourcemap for "<repo>/contract/managed/kredit/contract/index.js" points to missing source files
+ ✓ test/kredit.test.ts > Kredit contract > initializes admin correctly 42ms
+ ✓ test/kredit.test.ts > Kredit contract > admin can register an issuer 16ms
+ ✓ test/kredit.test.ts > Kredit contract > issueCredential stores a commitment 21ms
+ ✓ test/kredit.test.ts > Kredit contract > proveEligibility returns true for eligible score 21ms
+ ✓ test/kredit.test.ts > Kredit contract > proveEligibility returns false for ineligible score 20ms
+ ✓ test/kredit.test.ts > Kredit contract > revoked credential fails eligibility 23ms
+ ✓ test/kredit.test.ts > Kredit contract > only registered issuer can issue credentials 8ms
+ ✓ test/kredit.test.ts > Kredit contract > only admin can register issuers 10ms
+ ✓ test/kredit.test.ts > Kredit contract > proveEligibility returns true when score exactly equals threshold 17ms
+ ✓ test/kredit.test.ts > Kredit contract > proveEligibility returns true when score is zero and threshold is zero 16ms
+ ✓ test/kredit.test.ts > Kredit contract > proveEligibility returns true when score is max Uint16 and threshold equals it 17ms
+ ✓ test/kredit.test.ts > Kredit contract > unregistered issuer cannot issue credential 9ms
+ ✓ test/kredit.test.ts > Kredit contract > privacy: serialized ledger state does not contain score or salt 15ms
+ ✓ test/kredit.test.ts > Kredit contract > admin rotation prevents old admin from registering issuers 11ms
+ ✓ test/kredit.test.ts > Kredit contract > proveNotRevoked returns true for non-revoked credential 13ms
 
  Test Files  1 passed (1)
       Tests  15 passed (15)
-   Start at  23:45:41
-   Duration  818ms (transform 121ms, setup 0ms, collect 151ms, tests 335ms, environment 0ms, prepare 109ms)
+   Start at  00:27:10
+   Duration  465ms (tests 69%, transform 20%, import 9%, worker 1%)
 

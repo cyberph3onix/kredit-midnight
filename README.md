@@ -19,21 +19,50 @@
 | **Circuits** | `rotateAdmin`, `registerIssuer`, `unregisterIssuer`, `issueCredential`, `revokeCredential`, `proveEligibility`, `proveNotRevoked` |
 | **Runtime** | 0.16.0 |
 | **Contract Language** | Compact 0.23 |
+| **Deploy transaction** | [`ec1e9bc5…d214a`](https://indexer.preprod.midnight.network/api/v4/graphql) (id `624845`) |
+| **Deploy block** | `2692270` — `5845bc22…54a393` — 2026-09-24 17:34:54 UTC |
 
 The contract is compiled from `contract/src/kredit.compact` and deployed on Midnight Preprod. The same contract ID is used by every page of the frontend (`issuer`, `user`, `verify`); the deployed address is remembered by the Issuer Console and reused by the User and Verifier views.
+
+### Verify it yourself
+
+Preprod has no public block-explorer page for contract state, but the public
+indexer is open — anyone can confirm the contract exists on-chain without
+trusting this README:
+
+```bash
+ADDR=d7016be782218a515837a816c7e993131a8cc4272ea7ad05d061d4b2b6e39bed
+
+curl -s -X POST https://indexer.preprod.midnight.network/api/v4/graphql \
+  -H 'Content-Type: application/json' \
+  -d "{\"query\":\"query V(\$a:HexEncoded!){contractAction(address:\$a){... on ContractDeploy{state transaction{id hash block{height timestamp}}}}}\",\"variables\":{\"a\":\"$ADDR\"}}"
+```
+
+This returns the deploy transaction and the contract's on-chain state. All
+seven circuit names (`rotateAdmin` … `proveNotRevoked`) are present in that
+state, so the address is the Kredit contract and not an empty or unrelated
+deployment:
+
+![Contract verified against the Midnight Preprod indexer](screenshots/contract-verified.png)
 
 ---
 
 ## Live Demo & Video
 
-**Live Demo:** [https://kredit-midnight-frontend-l6vbxxm1q-cyberph3onixs-projects.vercel.app](https://kredit-midnight-frontend-l6vbxxm1q-cyberph3onixs-projects.vercel.app)
-[![frontend](image.png)](https://kredit-midnight-frontend-l6vbxxm1q-cyberph3onixs-projects.vercel.app)
+**Live Demo:** [https://kredit-midnight-frontend.vercel.app](https://kredit-midnight-frontend.vercel.app)
+[![frontend](image.png)](https://kredit-midnight-frontend.vercel.app)
 
 **Walkthrough Video:**
 
 [![Kredit Protocol — Demo Walkthrough](https://img.youtube.com/vi/u_vi6gyc3AA/0.jpg)](https://youtu.be/u_vi6gyc3AA)
 
 > Click the thumbnail above (or [watch on YouTube](https://youtu.be/u_vi6gyc3AA)) for a full walkthrough: wallet setup, contract deployment, credential issuance, and a zero-knowledge eligibility proof.
+
+**Screenshots** (captured from the live deployment above):
+
+| Landing page | Issuer Console |
+|---|---|
+| ![Landing page](screenshots/home.png) | ![Issuer Console](screenshots/issuer.png) |
 
 ---
 
@@ -127,6 +156,10 @@ An issuer (e.g., a bank) issues a credential commitment on-chain. The user holds
 | `revokeCredential(subject)` | Issuer | Mark credential as revoked |
 | `proveEligibility(threshold) → Bool` | Holder | Prove `score >= threshold` |
 | `proveNotRevoked() → Bool` | Holder | Prove credential is not revoked |
+
+`npm run compact` compiles all 7 circuits with the Compact 0.31.1 compiler, generating a prover/verifier keypair for each:
+
+![Compact compile output](screenshots/compile-output.png)
 
 ### Public Ledger State
 
@@ -230,6 +263,10 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 | 14 | Admin rotation prevents old admin from registering issuers | Admin |
 | 15 | ProveNotRevoked returns true for non-revoked credential | Revocation |
 
+`npm test` runs the suite against the Compact runtime simulator:
+
+![Test output — 15 passed](screenshots/tests-passing.png)
+
 ---
 
 ## Folder Structure
@@ -268,11 +305,17 @@ kredit-midnight/
 │   ├── architecture.md
 │   ├── privacy-model.md
 │   ├── toolchain.md                    # Version source of truth
-│   └── proposal.md                     # Level 3 proposal
+│   ├── proposal.md                     # Level 3 proposal
+│   ├── demo-script.md                  # 60-second walkthrough script
+│   ├── SUBMISSION_CHECKLIST.md         # Requirement-by-requirement status
+│   └── test-output.txt                 # Text copy of the last test run
 ├── screenshots/
 │   ├── home.png                        # Landing page
 │   ├── issuer.png                      # Issuer Console
-│   └── demo.png                        # Live demo capture
+│   ├── demo.png                        # Live demo capture
+│   ├── tests-passing.png               # Terminal capture: 15/15 tests passing
+│   ├── compile-output.png              # Terminal capture: 7 circuits compiled
+│   └── contract-verified.png           # Terminal capture: Preprod indexer query
 ├── .github/workflows/ci.yml            # CI/CD pipeline
 ├── start-services.sh                   # Local dev startup script
 ├── .env.example
@@ -304,9 +347,17 @@ GitHub Actions runs on every push/PR to `main`:
 1. Checkout code
 2. Setup Node.js 22
 3. Install Compact toolchain + dependencies
-4. Compile contract
-5. Run test suite
-6. Build API and frontend
+4. Compile contract (Compact → `contract/managed/`)
+5. Build contract package (tsc → `contract/dist/`, which is what `api` resolves `kredit-contract` types through)
+6. Typecheck `contract` and `api`
+7. Privacy check — no `privateState` in API routes
+8. Run test suite, upload output as an artifact
+9. Build API and frontend
+
+Step 5 must precede step 6: `api` depends on `kredit-contract` via
+`file:../contract`, whose `package.json` points `types` at `dist/index.d.ts`.
+Without `dist/` on disk, `tsc` fails with *"Cannot find module
+'kredit-contract' or its corresponding type declarations."*
 
 ---
 
@@ -352,13 +403,18 @@ GitHub Actions runs on every push/PR to `main`:
 
 **Checklist:**
 
-- [x] Compact contract with 7 circuits on Preprod (runtime 0.16.0)
-- [x] 15 passing tests (Vitest + compact-runtime simulator)
-- [x] Working frontend on Preprod (Next.js + Lace wallet integration)
+- [x] Compact contract with 7 circuits deployed on Preprod (runtime 0.16.0) — [verifiable on-chain](#deployed-contract)
+- [x] 15 passing tests (Vitest + compact-runtime simulator) — [terminal capture](screenshots/tests-passing.png)
+- [x] Successful compile listing all 7 circuits — [terminal capture](screenshots/compile-output.png)
+- [x] Working frontend on Preprod (Next.js 16 + Lace wallet integration) — [live demo](https://kredit-midnight-frontend.vercel.app)
 - [x] ZK proof generation for eligibility and revocation checks
-- [x] Privacy model with selective disclosure
-- [x] CI/CD pipeline (GitHub Actions)
-- [x] Documentation (README, architecture, privacy model, proposal)
+- [x] Privacy model with selective disclosure, including known limitations
+- [x] CI/CD pipeline green on `main` — [latest run](https://github.com/rue19/kredit-midnight/actions/runs/36176044750)
+- [x] Demo walkthrough video — [watch on YouTube](https://youtu.be/u_vi6gyc3AA)
+- [x] Documentation (README, architecture, privacy model, toolchain, proposal, demo script)
+
+Requirement-by-requirement status, with the exact command or endpoint used to
+verify each one, is in [`docs/SUBMISSION_CHECKLIST.md`](docs/SUBMISSION_CHECKLIST.md).
 
 **Key SDK Fixes:**
 - CompiledContract wrapper (`CompiledContract.make()` + `withWitnesses()`)

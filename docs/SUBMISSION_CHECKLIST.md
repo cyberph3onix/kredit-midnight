@@ -1,91 +1,68 @@
 # Submission Checklist — Kredit Protocol
 
-**Level 3: Half light, half shadow**
-**Date:** 2026-09-20
+**Level 3: Confidential Credential & Eligibility Protocol**
 **Repo:** https://github.com/rue19/kredit-midnight
+**Verified:** 2026-09-25
+
+Every PASS below was re-checked against the live repo, the live CI, the live
+deployment, and the Midnight Preprod indexer on the date above — not carried
+over from an earlier status pass. Where a claim could not be verified from the
+repository or the public network, it is marked as such rather than checked off.
 
 ---
 
 ## Requirements
 
-| # | Requirement | Status | Evidence |
+| # | Requirement | Status | How it was verified |
 |---|---|---|---|
-| 1 | Fully functional dApp using Midnight's privacy model | PARTIAL | Contract deploys, frontend works client-side via providers.ts, wallet integration, private state never leaves browser. **BLOCKER:** No deployed contract on Preprod yet (needs funded wallet). |
-| 2 | ≥3 tests passing | **PASS** | 15 tests passing (8 original + 7 new). See `docs/test-output.txt`. |
-| 3 | CI/CD with passing runs | **PASS** | GitHub Actions workflow at `.github/workflows/ci.yml`. 2 consecutive green runs (35461275467, 35461576782). |
-| 4 | Product proposal | **PASS** | `docs/proposal.md` — Age/Eligibility Gate via Selective Disclosure. |
-| 5 | ≥10 meaningful commits | **PASS** | 11 new conventional commits (fix/test/docs/chore). Total repo: 33 commits. |
-| 6 | Public repo with complete README | **PASS** | README rewritten with correct URLs, versions, privacy model, architecture, quick start. |
-| 7 | Live demo link (Vercel) | PARTIAL | URL exists: https://kreditmidnight.vercel.app — deployment status unverified (needs Vercel env vars). |
-| 8 | Screenshot of test output | MISSING | `screenshots/tests-passing.png` not yet created. **Human action needed.** |
-| 9 | 1-minute demo video script | **PASS** | `docs/demo-script.md` — 10-shot script with timings and narration. |
-| 10 | README "Privacy model" section | **PASS** | Three-part section: CAN learn, CANNOT learn, Known limitations and residual leakage. |
+| 1 | Functional dApp using Midnight's privacy model | PASS | Contract deployed on Preprod (row 11); frontend deployed and serving `/`, `/issuer`, `/user`, `/verify`; private state is built and held client-side in the browser and never crosses a network boundary. |
+| 2 | ≥3 tests passing | PASS | `npm test` → `Test Files 1 passed (1)`, `Tests 15 passed (15)`, exit code 0. Terminal capture embedded in the README (`screenshots/tests-passing.png`). |
+| 3 | CI/CD with passing runs | PASS | Workflow at `.github/workflows/ci.yml` runs on every push/PR to `main`. Latest run on `main`: [`36176044750`](https://github.com/rue19/kredit-midnight/actions/runs/36176044750) — **success**, all steps green (compile contract → build contract → typecheck → privacy check → tests → build API → build frontend). |
+| 4 | Product proposal | PASS | `docs/proposal.md` — Eligibility Gate via Selective Disclosure. |
+| 5 | ≥10 meaningful commits | PASS | 54 commits on `main`. Conventional-commit history across fix/test/docs/chore. |
+| 6 | Public repo with complete README | PASS | Repo is public (`private: false`), MIT licensed, default branch `main`. README covers architecture, privacy model, contract/circuit surface, quick start, wallet setup, troubleshooting, and submission checklist. |
+| 7 | Live demo link | PASS | `https://kredit-midnight-frontend.vercel.app` — unauthenticated `GET` returns **200** with zero redirects and serves the app (`<title>Kredit Protocol</title>`); `/issuer`, `/user`, `/verify` all return 200. No Vercel login wall. The deployment also has `NEXT_PUBLIC_CONTRACT_ADDRESS` set: the contract ID is present in the client bundles for all three pages. |
+| 8 | Screenshot of test output | PASS | `screenshots/tests-passing.png` — terminal capture of `npm test -- --reporter=verbose` showing all 15 test names and `15 passed (15)`. Embedded in the README's Test Suite section. |
+| 9 | Demo video | PASS | Walkthrough linked in the README: https://youtu.be/u_vi6gyc3AA — publicly viewable (unauthenticated 200, oEmbed resolves, title "kredit midnight demo"). Shot-by-shot script in `docs/demo-script.md`. |
+| 10 | README "Privacy model" section | PASS | Three-part section: what an observer **can** learn, what they **cannot** learn, and known limitations (holder linkability, threshold probing, issuer visibility, client-side storage). Deeper treatment in `docs/privacy-model.md`. |
+
+## Additional Level 3 requirements
+
+| # | Requirement | Status | How it was verified |
+|---|---|---|---|
+| 11 | Contract **verifiable** on-chain | PASS | Contract ID `d7016be7…e39bed` queried against the public Preprod indexer (`https://indexer.preprod.midnight.network/api/v4/graphql`). Returns deploy transaction id `624845`, hash `ec1e9bc5388bd187638f69c09d01106a7dd4df9349c6be8e7eba372bc85d214a`, block `2692270`, deployed 2026-09-24 17:34:54 UTC. All 7 circuit names are recoverable from the returned on-chain state (15,506 bytes), so the address is the Kredit contract and not an empty deployment. Copy-paste `curl` in the README; capture in `screenshots/contract-verified.png`. |
+| 12 | Successful compile listing circuits | PASS | `npm run compact` → `Compiling 7 circuits:` with Compact compiler 0.31.1 / language 0.23.0 / runtime 0.16.0, generating 7 prover + 7 verifier keypairs. Terminal capture in `screenshots/compile-output.png`, embedded in the README's Contract Details section. |
 
 ---
 
-## New Commits (11)
+## Not verifiable from the repository
 
-```
-a9400da docs: rewrite README, add proposal, demo script, LICENSE, privacy model
-cc049be fix: build contract package before frontend in CI
-5cb6e05 fix: add GH_TOKEN and cache for compact compiler in CI
-e1e7653 fix: typecheck only contract and api (skip frontend JSX)
-c6c83ad fix: correct repo URLs to rue19/kredit-midnight
-69b55bf fix: improve error messages, add privacy panel, remove maintenance note, fix vercel.json
-084e485 chore: add CI privacy check and update .env.example with Preprod endpoints
-cb18927 fix: remove server-side private state routes (privacy)
-bf6151a test: add 7 new tests (15 total) and document disclose() calls
-03a9197 chore: update lock file for toolchain migration
-cd5eb5f fix: pin compact compiler to 0.31.1 for network compatibility
-3cfc785 docs: level 3 audit
-```
-
-## CI Runs
-
-| Run | Status | URL |
-|---|---|---|
-| fix: build contract package before frontend in CI | GREEN | https://github.com/rue19/kredit-midnight/actions/runs/35461275467 |
-| docs: rewrite README, add proposal, demo script, LICENSE, privacy model | GREEN | https://github.com/rue19/kredit-midnight/actions/runs/35461576782 |
-
-## Test Output
-
-```
-✓ test/kredit.test.ts (15 tests) 333ms
-Test Files  1 passed (1)
-     Tests  15 passed (15)
-```
-
-## Files Added/Modified
-
-| File | Status |
+| Item | Note |
 |---|---|
-| `docs/level3-audit.md` | NEW |
-| `docs/toolchain.md` | NEW |
-| `docs/proposal.md` | NEW |
-| `docs/demo-script.md` | NEW |
-| `docs/test-output.txt` | NEW |
-| `docs/privacy-model.md` | UPDATED |
-| `LICENSE` | NEW |
-| `README.md` | REWRITTEN |
-| `.github/workflows/ci.yml` | UPDATED |
-| `contract/src/kredit.compact` | UPDATED (comments) |
-| `contract/test/kredit.test.ts` | UPDATED (7 new tests) |
-| `contract/package.json` | UPDATED (compact-js 2.5.1) |
-| `frontend/app/api/call/route.ts` | DELETED (privacy) |
-| `frontend/app/api/deploy/route.ts` | DELETED (privacy) |
-| `frontend/app/verify/page.tsx` | UPDATED (privacy panel) |
-| `frontend/app/issuer/page.tsx` | UPDATED (error msgs) |
-| `frontend/app/user/page.tsx` | UPDATED (error msg) |
-| `start-services.sh` | UPDATED (paths, image tag) |
-| `vercel.json` | UPDATED (installCommand) |
-| `.env.example` | UPDATED (Preprod endpoints) |
+| Idea sourced from the program's provided idea list and approved | `docs/proposal.md` is self-authored. Nothing in the repo — and nothing queryable on the public Preprod network — can show whether the idea was drawn from the program's list or approved by the program. This has to be confirmed with the program directly. It is not an engineering item. |
 
 ---
 
-## Remaining Human Actions
+## Known limitations (documented, not defects)
 
-1. **Fund Preprod wallet** from faucet and deploy contract → set `CONTRACT_ADDRESS`
-2. **Set Vercel env vars** if CLI not authenticated
-3. **Take screenshot** of terminal test output → `screenshots/tests-passing.png`
-4. **Record 1-minute demo video** using `docs/demo-script.md`
-5. **Submit proposal** for approval
+| Limitation | Where documented |
+|---|---|
+| Domain-separated holder keys allow linking multiple proof requests to one holder | README → Privacy Model → Known Limitations |
+| A verifier can binary-search the raw score by probing thresholds | README → Privacy Model → Known Limitations |
+| The issuing institution observes the raw score at issuance time | README → Privacy Model → Known Limitations |
+| `localStorage` holds secrets in plaintext, so XSS would expose them | README → Privacy Model → Known Limitations |
+
+---
+
+## Reproducing the verification
+
+```bash
+git clone https://github.com/rue19/kredit-midnight.git
+cd kredit-midnight
+npm install
+npm run compact     # Compiling 7 circuits
+npm test            # Tests  15 passed (15)
+```
+
+Live deployment and on-chain contract: see the README's *Live Demo* and
+*Deployed Contract* sections.
