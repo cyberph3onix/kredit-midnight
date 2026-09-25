@@ -409,7 +409,7 @@ Without `dist/` on disk, `tsc` fails with *"Cannot find module
 - [x] Working frontend on Preprod (Next.js 16 + Lace wallet integration) — [live demo](https://kredit-midnight-frontend.vercel.app)
 - [x] ZK proof generation for eligibility and revocation checks
 - [x] Privacy model with selective disclosure, including known limitations
-- [x] CI/CD pipeline green on `main` — [latest run](https://github.com/rue19/kredit-midnight/actions/runs/36176044750)
+- [x] CI/CD pipeline green on `main` — [run 36177151325](https://github.com/rue19/kredit-midnight/actions/runs/36177151325)
 - [x] Demo walkthrough video — [watch on YouTube](https://youtu.be/u_vi6gyc3AA)
 - [x] Documentation (README, architecture, privacy model, toolchain, proposal, demo script)
 
