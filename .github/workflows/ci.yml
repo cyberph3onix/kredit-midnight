@@ -39,6 +39,15 @@ jobs:
       - name: Compile contract
         run: npm run compact
 
+      # Must run before Typecheck: api resolves kredit-contract through
+      # node_modules -> ../contract, whose package.json "types" points at
+      # dist/index.d.ts. Without this step, tsc reports
+      # "Cannot find module 'kredit-contract' or its corresponding type
+      # declarations." Compiling first is what produces managed/; this
+      # build is what produces dist/.
+      - name: Build contract package
+        run: cd contract && npm run build
+
       - name: Typecheck
         run: |
           cd contract && npx tsc --noEmit
@@ -65,9 +74,6 @@ jobs:
         with:
           name: test-output
           path: test-output.txt
-
-      - name: Build contract
-        run: cd contract && npm run build
 
       - name: Build API
         run: cd api && npm run build
